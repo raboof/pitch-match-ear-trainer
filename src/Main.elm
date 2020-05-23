@@ -2,6 +2,9 @@ module Main exposing (..)
 
 import Browser
 import Browser.Events
+
+import Json.Decode as D
+
 import Html exposing (Html, button, div, text)
 import Html.Events exposing (onClick)
 
@@ -15,11 +18,12 @@ main =
   , subscriptions = subscriptions
   }
 
-init _ = (0, Cmd.none)
+init () = (0, Cmd.none)
 
 update msg model =
   case msg of
-    Start -> model + 1
+    Start -> (model + 1, Cmd.none)
+    MouseMoved -> (model - 1, Cmd.none)
 
 view model =
   div []
@@ -27,7 +31,5 @@ view model =
     , div [] [ text (String.fromInt model) ]
     ]
 
-decodeMouseMove _ = MouseMoved
-
 subscriptions model =
-  Browser.Events.onMouseMove decodeMouseMove
+  Browser.Events.onMouseMove (D.succeed MouseMoved)
