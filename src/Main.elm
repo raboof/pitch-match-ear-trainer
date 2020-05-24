@@ -24,6 +24,7 @@ type Page =
   Calibrating |
   Trying PointState |
   Finding Frequency OkFor PointState |
+  Found |
   ErrorPage String
 
 type alias Model = 
@@ -75,6 +76,7 @@ setY model y =
     Finding target okFor _ ->
       let current = yToFrequency model.windowHeight y
       in Finding target okFor (Down current)
+    Found -> Found
     ErrorPage e -> ErrorPage e
 
 up model =
@@ -83,6 +85,7 @@ up model =
     Calibrating -> Calibrating
     Trying _ -> Trying Up
     Finding t _ _ -> Finding t 0 Up
+    Found -> Found
     ErrorPage e -> ErrorPage e
 
 init windowHeight = ({ windowHeight = windowHeight, currentPage = Init }, Cmd.none)
@@ -111,6 +114,7 @@ sounds model =
     Trying Up -> silent
     Finding targetFreq _ Up -> encodeSounds 0.4 targetFreq 0 0
     Finding targetFreq _ (Down pointedFreq) -> encodeSounds 0.4 targetFreq 0.4 pointedFreq
+    Found -> silent
     ErrorPage e -> silent
 
 updateAndSetSounds : Model -> (Model, Cmd msg)
@@ -121,9 +125,13 @@ newChallenge = Finding 800 0 Up
 tick page =
   case page of
     Finding target okFor (Down current) ->
-      if (matches target current)
-      then Finding target (okFor + 1) (Down current)
-      else Finding target 0 (Down current)
+      if (okFor > 7)
+      then Found
+      else (
+        if (matches target current)
+        then Finding target (okFor + 1) (Down current)
+        else Finding target 0 (Down current)
+      )
     _ -> page
 
 updateModel model msg =
@@ -171,6 +179,10 @@ view model =
           then div [] [ text "Match!" ] 
           else div [] [ text "No match yet..." ] 
         ]
+    Found -> div []
+      [ div [ attribute "class" "text" ] [ text "Nice! You got it!" ]
+      , div [ onClick Start, attribute "class" "button" ] [ text "Play another" ]
+      ]
     ErrorPage e -> div [] 
       [ div [ attribute "class" "text" ] [ text e ] ]
 
