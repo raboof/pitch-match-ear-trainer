@@ -3,6 +3,7 @@ port module Main exposing (..)
 import List exposing (head)
 import Maybe exposing (withDefault)
 import Time
+import Random
 
 import Browser
 import Browser.Events
@@ -36,6 +37,7 @@ type Msg =
   Calibrate |
   Try |
   Start |
+  NewChallenge Frequency |
   MouseMoved Int |
   MouseUp |
   Error String |
@@ -58,8 +60,8 @@ port onTouchMove : (Decode.Value -> msg) -> Sub msg
 port onTouchCancel : ({} -> msg) -> Sub msg
 port onTouchEnd : ({} -> msg) -> Sub msg
 
-minPitch = 300.0
-maxPitch = 2000.0
+minPitch = 300
+maxPitch = 1000
 
 yToFrequency : Int -> Int -> Frequency
 yToFrequency windowHeight y = round (maxPitch - ((maxPitch - minPitch) * (toFloat y) / (toFloat windowHeight)))
@@ -120,12 +122,10 @@ sounds model =
 updateAndSetSounds : Model -> (Model, Cmd msg)
 updateAndSetSounds model = (model, setSounds (sounds model.currentPage))
 
-newChallenge = Finding 800 0 Up
-
 tick page =
   case page of
     Finding target okFor (Down current) ->
-      if (okFor > 7)
+      if (okFor > 5)
       then Found
       else (
         if (matches target current)
@@ -139,14 +139,18 @@ updateModel model msg =
   case msg of
     Calibrate -> { model | currentPage = Calibrating }
     Try -> { model | currentPage = Trying Up }
-    Start -> { model | currentPage = newChallenge }
+    Start -> model
+    NewChallenge target -> { model | currentPage = Finding target 0 Up }
     MouseMoved y -> { model | currentPage = setY model y }
     MouseUp -> { model | currentPage = up model.currentPage }
     Error e -> { model | currentPage = ErrorPage e }
     Tick -> { model | currentPage = tick model.currentPage }
 
-update : Msg -> Model -> (Model, Cmd msg)
-update msg model = updateAndSetSounds (updateModel model msg)
+update : Msg -> Model -> (Model, Cmd Msg)
+update msg model =
+  case msg of
+    Start -> (model, Random.generate NewChallenge (Random.int (minPitch+10) (maxPitch-10)))
+    _ -> updateAndSetSounds (updateModel model msg)
 
 view model =
   case model.currentPage of
@@ -162,22 +166,23 @@ view model =
       [ div [ attribute "class" "text" ] [ text "You can 'play' by touching the screen. Try it!" ] 
       , div [ onClick Start, attribute "class" "button" ] [ text "Got it!" ]
       ]
-    Finding target _ Up -> div [] [ text (String.fromInt target) ]
-    Finding target okFor (Down pointed) ->
+    --Finding target _ Up -> div [] [ text (String.fromInt target) ]
+    --Finding target okFor (Down pointed) ->
+    Finding target _ _ ->
       div
         []
         [ text "target "
         , text (String.fromInt target)
-        , text "pointed "
-        , text (String.fromInt pointed)
-        , text "diff "
-        , text (String.fromInt (abs (target - pointed)))
-        , text " ok for: "
-        , text (String.fromInt okFor)
+        --, text "pointed "
+        --, text (String.fromInt pointed)
+        --, text "diff "
+        --, text (String.fromInt (abs (target - pointed)))
+        --, text " ok for: "
+        --, text (String.fromInt okFor)
         , div [ attribute "class" "text" ] [ text "Try to match the 2 pitches" ]
-        , if matches target pointed
-          then div [] [ text "Match!" ] 
-          else div [] [ text "No match yet..." ] 
+        --, if matches target pointed
+        --  then div [] [ text "Match!" ] 
+        --  else div [] [ text "No match yet..." ] 
         ]
     Found -> div []
       [ div [ attribute "class" "text" ] [ text "Nice! You got it!" ]
