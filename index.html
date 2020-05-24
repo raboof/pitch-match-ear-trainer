@@ -106,7 +106,8 @@ function start() {
   }
 
   var app = Elm.Main.init({
-    node: document.getElementById('myapp')
+    node: document.getElementById('myapp'),
+    flags: window.innerHeight
   });
 
   app.ports.setSounds.subscribe(function(sounds) {

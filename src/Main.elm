@@ -17,13 +17,18 @@ type alias Frequency = Int
 
 type PointState = Up | Down Frequency
 
-type Model = 
+type Page = 
   Init |
   Calibrating |
   Trying PointState |
   Finding Int PointState |
   ErrorPage String
 
+type alias Model = 
+  { windowHeight : Int
+  , currentPage : Page
+  }
+    
 type Msg =
   Calibrate |
   Try |
@@ -49,13 +54,19 @@ port onTouchMove : (Decode.Value -> msg) -> Sub msg
 port onTouchCancel : ({} -> msg) -> Sub msg
 port onTouchEnd : ({} -> msg) -> Sub msg
 
-setY : Model -> Int -> Model
+minPitch = 300.0
+maxPitch = 2000.0
+
+yToFrequency : Int -> Int -> Frequency
+yToFrequency windowHeight y = round (maxPitch - ((maxPitch - minPitch) * (toFloat y) / (toFloat windowHeight)))
+
+setY : Model -> Int -> Page
 setY model y =
-  case model of
+  case model.currentPage of
     Init -> Init
     Calibrating -> Calibrating
-    Trying _ -> Trying (Down y)
-    Finding t _ -> Finding t (Down y)
+    Trying _ -> Trying (Down (yToFrequency model.windowHeight y))
+    Finding t _ -> Finding t (Down (yToFrequency model.windowHeight y))
     ErrorPage e -> ErrorPage e
 
 up model =
@@ -66,7 +77,7 @@ up model =
     Finding t _ -> Finding t Up
     ErrorPage e -> ErrorPage e
 
-init () = (Init, Cmd.none)
+init windowHeight = ({ windowHeight = windowHeight, currentPage = Init }, Cmd.none)
 
 encodeSounds tGain tFreq pGain pFreq =
   Encode.object
@@ -95,22 +106,23 @@ sounds model =
     ErrorPage e -> silent
 
 updateAndSetSounds : Model -> (Model, Cmd msg)
-updateAndSetSounds model = (model, setSounds (sounds model))
+updateAndSetSounds model = (model, setSounds (sounds model.currentPage))
 
 updateModel model msg =
-  -- Later split out per model type
+  -- Later split out per current page type
   case msg of
-    Calibrate -> Calibrating
-    Try -> Trying Up
-    Start -> Finding 800 Up
-    MouseMoved y -> setY model y
-    MouseUp -> up model
-    Error e -> ErrorPage e
+    Calibrate -> { model | currentPage = Calibrating }
+    Try -> { model | currentPage = Trying Up }
+    Start -> { model | currentPage = Finding 800 Up }
+    MouseMoved y -> { model | currentPage = setY model y }
+    MouseUp -> { model | currentPage = up model.currentPage }
+    Error e -> { model | currentPage = ErrorPage e }
 
+update : Msg -> Model -> (Model, Cmd msg)
 update msg model = updateAndSetSounds (updateModel model msg)
 
 view model =
-  case model of
+  case model.currentPage of
     Init -> div []
       [ div [ attribute "class" "text" ] [ text "Welcome to Pitcher! A game to train 'pitch matching' by ear. This game is best enjoyed alone or with headphones." ] 
       , div [ onClick Calibrate, attribute "class" "button" ] [ text "Calibrate volume" ]
@@ -124,7 +136,20 @@ view model =
       , div [ onClick Start, attribute "class" "button" ] [ text "Got it!" ]
       ]
     Finding target Up -> div [] [ text (String.fromInt target) ]
-    Finding target (Down y) -> div [] [ text (String.fromInt target), text (String.fromInt y) ]
+    Finding target (Down pointed) ->
+      div
+        []
+        [ text "target "
+        , text (String.fromInt target)
+        , text "pointed "
+        , text (String.fromInt pointed)
+        , text "diff "
+        , text (String.fromInt (abs (target - pointed)))
+        , div [ attribute "class" "text" ] [ text "Try to match the 2 pitches" ]
+        , if abs (target - pointed) < 7
+          then div [] [ text "Match!" ] 
+          else div [] [ text "No match yet..." ] 
+        ]
     ErrorPage e -> div [] 
       [ div [ attribute "class" "text" ] [ text e ] ]
 
