@@ -104,6 +104,14 @@ function start() {
   var app = Elm.Main.init({
     node: document.getElementById('myapp')
   });
+  app.ports.startAudio.subscribe(start);
+  app.ports.setSounds.subscribe(function(sounds) {
+    targetGain.gain.value = sounds.target.gain;
+    target.frequency.setValueAtTime(sounds.target.frequency, audioContext.currentTime);
+
+    pointedGain.gain.value = sounds.pointed.gain;
+    pointed.frequency.setValueAtTime(sounds.pointed.frequency, audioContext.currentTime);
+  });
   </script>
 </body>
 </html>
