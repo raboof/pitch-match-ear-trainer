@@ -6,22 +6,37 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=0" />
 <style>
 body {
-	font-family: sans-serif;
+	font-family: proxima-soft, sans-serif;
+}
+
+div.text {
+	font-weight: 300;
+	font-size: 1em;
+	background: lightblue;
+	margin: 3em;
+	padding: 1em;
 }
 
 div.button {
+	text-align: center;
+	font-weight: 700;
+	font-size: 2em;
 	display: block;
 	background: blue;
 	color: white;
 	margin: 1em;
-	padding: 1em;
+	padding-top: 1em;
+	padding-bottom: 1em;
 }
+
 </style>
 </head>
 
 <body>
   <div id="myapp"></div>
   <script>
+var started = false;
+
 const minPitch = 300
 const maxPitch = 2000
 
@@ -56,10 +71,6 @@ function resume() {
 }
 
 function start() {
-	console.log("Start!");
-	target.start(0);
-	pointed.start(0);
-
 	function updatePitch(e) {
 		const curY = (window.Event) ? e.pageY : event.clientY + (document.documentElement.scrollTop ? document.documentElement.scrollTop : document.body.scrollTop);
 	
@@ -89,23 +100,34 @@ function start() {
 			stopPoint();
 		}
 	}
-	
+        document.onclick = togglePoint;
   }
 
   var app = Elm.Main.init({
     node: document.getElementById('myapp')
   });
-  app.ports.startAudio.subscribe(start);
   app.ports.setSounds.subscribe(function(sounds) {
-    targetGain.gain.value = sounds.target.gain;
-    target.frequency.setValueAtTime(sounds.target.frequency, audioContext.currentTime);
+    if (!started && (sounds.target.gain > 0 || sounds.pointed.gain > 0)) {
+      started = true;
+      target.start(audioContext.currentTime);
+      pointed.start(audioContext.currentTime);
+    }
+    if (targetGain.gain.value != sounds.target.gain) {
+      targetGain.gain.value = sounds.target.gain;
+    }
+    if (target.frequency.value != sounds.target.frequency) {
+      target.frequency.setValueAtTime(sounds.target.frequency, audioContext.currentTime);
+    }
 
-    pointedGain.gain.value = sounds.pointed.gain;
-    pointed.frequency.setValueAtTime(sounds.pointed.frequency, audioContext.currentTime);
+    if (pointedGain.gain.value != sounds.pointed.gain) {
+       pointedGain.gain.value = sounds.pointed.gain;
+    }
+    if (pointed.frequency.value != sounds.pointed.frequency) {
+      pointed.frequency.setValueAtTime(sounds.pointed.frequency, audioContext.currentTime);
+    }
   });
-  document.onclick = togglePoint;
-  document.onmouseout = app.port.onMouseOut;
-  document.onmouseenter = app.port.onMouseEnter;
+  document.onmouseout = app.ports.onMouseOut;
+  document.onmouseenter = app.ports.onMouseEnter;
   document.addEventListener("touchmove", app.ports.onTouchMove.send, false);
   document.addEventListener("touchstart", app.ports.onTouchStart.send, false);
   document.addEventListener("touchcancel", app.ports.onTouchCancel.send, false);

@@ -11,13 +11,19 @@ import Json.Encode as Encode
 
 import Html exposing (Html, button, div, text)
 import Html.Events exposing (onClick, on)
+import Html.Attributes exposing (attribute)
 
 type alias Frequency = Int
 
 type PointState = Up | Down Frequency
 
-type Model = Init | Finding Int PointState
-type Msg = Start | MouseMoved Int | MouseUp
+type Model = 
+  Init |
+  Calibrating |
+  Trying PointState |
+  Finding Int PointState
+
+type Msg = Calibrate | Try | Start | MouseMoved Int | MouseUp
 
 main =
   Browser.element
@@ -40,11 +46,15 @@ setY : Model -> Int -> Model
 setY model y =
   case model of
     Init -> Init
+    Calibrating -> Calibrating
+    Trying _ -> Trying (Down y)
     Finding t _ -> Finding t (Down y)
 
 up model =
   case model of
     Init -> Init
+    Calibrating -> Calibrating
+    Trying _ -> Trying Up
     Finding t _ -> Finding t Up
 
 init () = (Init, Cmd.none)
@@ -63,26 +73,47 @@ encodeSounds tGain tFreq pGain pFreq =
       )
     ]
 
+silent = encodeSounds 0 0 0 0
+
 sounds model =
   case model of
-    Init -> encodeSounds 0 0 0 0
+    Init -> silent
+    Calibrating -> encodeSounds 0.4 800 0 0
+    Trying (Down pointedFreq) -> encodeSounds 0 0 0.4 pointedFreq
+    Trying Up -> silent
     Finding targetFreq Up -> encodeSounds 0.4 targetFreq 0 0
     Finding targetFreq (Down pointedFreq) -> encodeSounds 0.4 targetFreq 0.4 pointedFreq
 
 updateAndSetSounds : Model -> (Model, Cmd msg)
 updateAndSetSounds model = (model, setSounds (sounds model))
 
-update msg model =
+updateModel model msg =
+  -- Later split out per model type
   case msg of
-    Start -> (Finding 800 Up, startAudio())
-    MouseMoved y -> updateAndSetSounds (setY model y)
-    MouseUp -> updateAndSetSounds (up model)
+    Calibrate -> Calibrating
+    Try -> Trying Up
+    Start -> Finding 800 Up
+    MouseMoved y -> setY model y
+    MouseUp -> up model
+
+update msg model = updateAndSetSounds (updateModel model msg)
 
 view model =
-    case model of
-      Init -> button [ onClick Start ] [ text "Start!" ]
-      Finding target Up -> div [] [ text (String.fromInt target) ]
-      Finding target (Down y) -> div [] [ text (String.fromInt target), text (String.fromInt y) ]
+  case model of
+    Init -> div []
+      [ div [ attribute "class" "text" ] [ text "Welcome to Pitcher! A game to train 'pitch matching' by ear. This game is best enjoyed alone or with headphones." ] 
+      , div [ onClick Calibrate, attribute "class" "button" ] [ text "Calibrate volume" ]
+      ]
+    Calibrating -> div []
+      [ div [ attribute "class" "text" ] [ text "You should now hear a 'target pitch'. Later you will be challenged to match this pitch. Take a minute to adjust your volume so it is comfortable" ] 
+      , div [ onClick Try, attribute "class" "button" ] [ text "I'm happy" ]
+      ]
+    Trying _ -> div []
+      [ div [ attribute "class" "text" ] [ text "You can 'play' by touching the screen. Try it!" ] 
+      , div [ onClick Start, attribute "class" "button" ] [ text "Got it!" ]
+      ]
+    Finding target Up -> div [] [ text (String.fromInt target) ]
+    Finding target (Down y) -> div [] [ text (String.fromInt target), text (String.fromInt y) ]
 
 getTouchY obj =
   case (Decode.decodeValue (field "touches" (field "0" (field "pageY" int))) obj) of
