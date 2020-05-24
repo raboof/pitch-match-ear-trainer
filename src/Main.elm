@@ -2,6 +2,7 @@ port module Main exposing (..)
 
 import List exposing (head)
 import Maybe exposing (withDefault)
+import Time
 
 import Browser
 import Browser.Events
@@ -14,6 +15,7 @@ import Html.Events exposing (onClick, on)
 import Html.Attributes exposing (attribute)
 
 type alias Frequency = Int
+type alias OkFor = Int
 
 type PointState = Up | Down Frequency
 
@@ -21,7 +23,7 @@ type Page =
   Init |
   Calibrating |
   Trying PointState |
-  Finding Int PointState |
+  Finding Frequency OkFor PointState |
   ErrorPage String
 
 type alias Model = 
@@ -35,7 +37,8 @@ type Msg =
   Start |
   MouseMoved Int |
   MouseUp |
-  Error String
+  Error String |
+  Tick
 
 main =
   Browser.element
@@ -60,13 +63,18 @@ maxPitch = 2000.0
 yToFrequency : Int -> Int -> Frequency
 yToFrequency windowHeight y = round (maxPitch - ((maxPitch - minPitch) * (toFloat y) / (toFloat windowHeight)))
 
+matches : Frequency -> Frequency -> Bool
+matches target current = abs (target - current) < 7
+
 setY : Model -> Int -> Page
 setY model y =
   case model.currentPage of
     Init -> Init
     Calibrating -> Calibrating
     Trying _ -> Trying (Down (yToFrequency model.windowHeight y))
-    Finding t _ -> Finding t (Down (yToFrequency model.windowHeight y))
+    Finding target okFor _ ->
+      let current = yToFrequency model.windowHeight y
+      in Finding target okFor (Down current)
     ErrorPage e -> ErrorPage e
 
 up model =
@@ -74,7 +82,7 @@ up model =
     Init -> Init
     Calibrating -> Calibrating
     Trying _ -> Trying Up
-    Finding t _ -> Finding t Up
+    Finding t _ _ -> Finding t 0 Up
     ErrorPage e -> ErrorPage e
 
 init windowHeight = ({ windowHeight = windowHeight, currentPage = Init }, Cmd.none)
@@ -101,22 +109,33 @@ sounds model =
     Calibrating -> encodeSounds 0.4 800 0 0
     Trying (Down pointedFreq) -> encodeSounds 0 0 0.4 pointedFreq
     Trying Up -> silent
-    Finding targetFreq Up -> encodeSounds 0.4 targetFreq 0 0
-    Finding targetFreq (Down pointedFreq) -> encodeSounds 0.4 targetFreq 0.4 pointedFreq
+    Finding targetFreq _ Up -> encodeSounds 0.4 targetFreq 0 0
+    Finding targetFreq _ (Down pointedFreq) -> encodeSounds 0.4 targetFreq 0.4 pointedFreq
     ErrorPage e -> silent
 
 updateAndSetSounds : Model -> (Model, Cmd msg)
 updateAndSetSounds model = (model, setSounds (sounds model.currentPage))
+
+newChallenge = Finding 800 0 Up
+
+tick page =
+  case page of
+    Finding target okFor (Down current) ->
+      if (matches target current)
+      then Finding target (okFor + 1) (Down current)
+      else Finding target 0 (Down current)
+    _ -> page
 
 updateModel model msg =
   -- Later split out per current page type
   case msg of
     Calibrate -> { model | currentPage = Calibrating }
     Try -> { model | currentPage = Trying Up }
-    Start -> { model | currentPage = Finding 800 Up }
+    Start -> { model | currentPage = newChallenge }
     MouseMoved y -> { model | currentPage = setY model y }
     MouseUp -> { model | currentPage = up model.currentPage }
     Error e -> { model | currentPage = ErrorPage e }
+    Tick -> { model | currentPage = tick model.currentPage }
 
 update : Msg -> Model -> (Model, Cmd msg)
 update msg model = updateAndSetSounds (updateModel model msg)
@@ -135,8 +154,8 @@ view model =
       [ div [ attribute "class" "text" ] [ text "You can 'play' by touching the screen. Try it!" ] 
       , div [ onClick Start, attribute "class" "button" ] [ text "Got it!" ]
       ]
-    Finding target Up -> div [] [ text (String.fromInt target) ]
-    Finding target (Down pointed) ->
+    Finding target _ Up -> div [] [ text (String.fromInt target) ]
+    Finding target okFor (Down pointed) ->
       div
         []
         [ text "target "
@@ -145,8 +164,10 @@ view model =
         , text (String.fromInt pointed)
         , text "diff "
         , text (String.fromInt (abs (target - pointed)))
+        , text " ok for: "
+        , text (String.fromInt okFor)
         , div [ attribute "class" "text" ] [ text "Try to match the 2 pitches" ]
-        , if abs (target - pointed) < 7
+        , if matches target pointed
           then div [] [ text "Match!" ] 
           else div [] [ text "No match yet..." ] 
         ]
@@ -166,4 +187,5 @@ subscriptions _ = Sub.batch
   , onTouchEnd (\_ -> MouseUp)
   , onMouseOut (\_ -> MouseUp)
   , onTouchCancel (\_ -> MouseUp)
+  , Time.every 200 (\_ -> Tick)
   ]
