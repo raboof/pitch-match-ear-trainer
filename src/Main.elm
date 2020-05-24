@@ -1,15 +1,23 @@
 port module Main exposing (..)
 
+import List exposing (head)
+import Maybe exposing (withDefault)
+
 import Browser
 import Browser.Events
 
-import Json.Decode as Decode exposing (field, int, map)
+import Json.Decode as Decode exposing (field, int, string, map, list)
 import Json.Encode as Encode
 
 import Html exposing (Html, button, div, text)
-import Html.Events exposing (onClick)
+import Html.Events exposing (onClick, on)
 
-type Msg = Start | MouseMoved Int
+type alias Frequency = Int
+
+type PointState = Up | Down Frequency
+
+type Model = Init | Finding Int PointState
+type Msg = Start | MouseMoved Int | MouseUp
 
 main =
   Browser.element
@@ -21,15 +29,23 @@ main =
 
 port setSounds : Encode.Value -> Cmd msg
 port startAudio : () -> Cmd msg
-
-type MouseState = Up | Down Int
-type Model = Init | Finding Int MouseState
+port onMouseEnter : ({ pageY : Int } -> msg) -> Sub msg
+port onMouseOut : ({} -> msg) -> Sub msg
+port onTouchStart : (Decode.Value -> msg) -> Sub msg
+port onTouchMove : (Decode.Value -> msg) -> Sub msg
+port onTouchCancel : ({} -> msg) -> Sub msg
+port onTouchEnd : ({} -> msg) -> Sub msg
 
 setY : Model -> Int -> Model
 setY model y =
   case model of
     Init -> Init
     Finding t _ -> Finding t (Down y)
+
+up model =
+  case model of
+    Init -> Init
+    Finding t _ -> Finding t Up
 
 init () = (Init, Cmd.none)
 
@@ -59,7 +75,8 @@ updateAndSetSounds model = (model, setSounds (sounds model))
 update msg model =
   case msg of
     Start -> (Finding 800 Up, startAudio())
-    MouseMoved y -> updateAndSetSounds ( setY model y )
+    MouseMoved y -> updateAndSetSounds (setY model y)
+    MouseUp -> updateAndSetSounds (up model)
 
 view model =
     case model of
@@ -67,5 +84,17 @@ view model =
       Finding target Up -> div [] [ text (String.fromInt target) ]
       Finding target (Down y) -> div [] [ text (String.fromInt target), text (String.fromInt y) ]
 
-subscriptions model =
-  Browser.Events.onMouseMove (map MouseMoved (field "pageY" int))
+getTouchY obj =
+  case (Decode.decodeValue (field "touches" (field "0" (field "pageY" int))) obj) of
+    Ok y -> MouseMoved y
+    Err error -> MouseMoved 0
+
+subscriptions _ = Sub.batch
+  [ Browser.Events.onMouseMove (map MouseMoved (field "pageY" int))
+  , onMouseEnter (\o -> (MouseMoved o.pageY))
+  , onTouchStart getTouchY
+  , onTouchMove getTouchY
+  , onTouchEnd (\_ -> MouseUp)
+  , onMouseOut (\_ -> MouseUp)
+  , onTouchCancel (\_ -> MouseUp)
+  ]

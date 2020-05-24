@@ -90,15 +90,6 @@ function start() {
 		}
 	}
 	
-	//document.onmousemove = updatePitch;
-	document.onmouseout = pause;
-	document.onmouseenter = resume;
-	document.onclick = togglePoint;
-	
-	document.addEventListener("touchstart", updateTouchPitch, false);
-	document.addEventListener("touchmove", updateTouchPitch, false);
-	document.addEventListener("touchcancel", stopPoint, false);
-	document.addEventListener("touchend", stopPoint, false);
   }
 
   var app = Elm.Main.init({
@@ -106,13 +97,19 @@ function start() {
   });
   app.ports.startAudio.subscribe(start);
   app.ports.setSounds.subscribe(function(sounds) {
-    console.log(sounds)
     targetGain.gain.value = sounds.target.gain;
     target.frequency.setValueAtTime(sounds.target.frequency, audioContext.currentTime);
 
     pointedGain.gain.value = sounds.pointed.gain;
     pointed.frequency.setValueAtTime(sounds.pointed.frequency, audioContext.currentTime);
   });
+  document.onclick = togglePoint;
+  document.onmouseout = app.port.onMouseOut;
+  document.onmouseenter = app.port.onMouseEnter;
+  document.addEventListener("touchmove", app.ports.onTouchMove.send, false);
+  document.addEventListener("touchstart", app.ports.onTouchStart.send, false);
+  document.addEventListener("touchcancel", app.ports.onTouchCancel.send, false);
+  document.addEventListener("touchend", app.ports.onTouchEnd.send, false);
   </script>
 </body>
 </html>
