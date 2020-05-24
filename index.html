@@ -3,11 +3,104 @@
   <meta charset="UTF-8">
   <title>Main</title>
   <script src="main.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=0" />
+<style>
+body {
+	font-family: sans-serif;
+}
+
+div.button {
+	display: block;
+	background: blue;
+	color: white;
+	margin: 1em;
+	padding: 1em;
+}
+</style>
 </head>
 
 <body>
   <div id="myapp"></div>
   <script>
+const minPitch = 300
+const maxPitch = 2000
+
+const AudioContext = window.AudioContext || window.webkitAudioContext;
+const audioContext = new AudioContext();
+
+const target = audioContext.createOscillator();
+target.type = 'sine';
+target.frequency.setValueAtTime(800, audioContext.currentTime);
+
+const targetGain = audioContext.createGain();
+targetGain.gain.value = 0.413;
+target.connect(targetGain);
+targetGain.connect(audioContext.destination);
+
+const pointed = audioContext.createOscillator();
+pointed.type = 'square';
+
+const pointedGain = audioContext.createGain();
+pointedGain.gain.value = 0;
+pointed.connect(pointedGain);
+pointedGain.connect(audioContext.destination);
+
+function pause() {
+	pointedGain.gain.value = 0;
+	targetGain.gain.value = 0;
+}
+
+function resume() {
+	pointedGain.gain.value = 0.4;
+	targetGain.gain.value = 0.4;
+}
+
+function start() {
+	console.log("Start!");
+	target.start(0);
+	pointed.start(0);
+
+	function updatePitch(e) {
+		const curY = (window.Event) ? e.pageY : event.clientY + (document.documentElement.scrollTop ? document.documentElement.scrollTop : document.body.scrollTop);
+	
+		const newPitch = maxPitch - ((maxPitch - minPitch) * (curY) / window.innerHeight)
+		pointed.frequency.setValueAtTime(newPitch, audioContext.currentTime);
+		resume();
+	}
+	
+	function updateTouchPitch() {
+		const curY = event.touches[0].pageY;
+	
+		const newPitch = maxPitch - ((maxPitch - minPitch) * (curY) / window.innerHeight)
+		pointed.frequency.setValueAtTime(newPitch, audioContext.currentTime);
+		resume();
+	}
+
+	function startPoint() {
+		pointedGain.gain.value = 0.4;
+	}
+	function stopPoint() {
+		pointedGain.gain.value = 0;
+	}
+	function togglePoint() {
+		if (pointedGain.gain.value == 0) {
+			startPoint();
+		} else {
+			stopPoint();
+		}
+	}
+	
+	//document.onmousemove = updatePitch;
+	document.onmouseout = pause;
+	document.onmouseenter = resume;
+	document.onclick = togglePoint;
+	
+	document.addEventListener("touchstart", updateTouchPitch, false);
+	document.addEventListener("touchmove", updateTouchPitch, false);
+	document.addEventListener("touchcancel", stopPoint, false);
+	document.addEventListener("touchend", stopPoint, false);
+  }
+
   var app = Elm.Main.init({
     node: document.getElementById('myapp')
   });
