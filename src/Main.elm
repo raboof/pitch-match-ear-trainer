@@ -6,7 +6,7 @@ import Maybe exposing (withDefault)
 import Browser
 import Browser.Events
 
-import Json.Decode as Decode exposing (field, int, string, map, list)
+import Json.Decode as Decode exposing (..)
 import Json.Encode as Encode
 
 import Html exposing (Html, button, div, text)
@@ -21,9 +21,16 @@ type Model =
   Init |
   Calibrating |
   Trying PointState |
-  Finding Int PointState
+  Finding Int PointState |
+  ErrorPage String
 
-type Msg = Calibrate | Try | Start | MouseMoved Int | MouseUp
+type Msg =
+  Calibrate |
+  Try |
+  Start |
+  MouseMoved Int |
+  MouseUp |
+  Error String
 
 main =
   Browser.element
@@ -49,6 +56,7 @@ setY model y =
     Calibrating -> Calibrating
     Trying _ -> Trying (Down y)
     Finding t _ -> Finding t (Down y)
+    ErrorPage e -> ErrorPage e
 
 up model =
   case model of
@@ -56,6 +64,7 @@ up model =
     Calibrating -> Calibrating
     Trying _ -> Trying Up
     Finding t _ -> Finding t Up
+    ErrorPage e -> ErrorPage e
 
 init () = (Init, Cmd.none)
 
@@ -83,6 +92,7 @@ sounds model =
     Trying Up -> silent
     Finding targetFreq Up -> encodeSounds 0.4 targetFreq 0 0
     Finding targetFreq (Down pointedFreq) -> encodeSounds 0.4 targetFreq 0.4 pointedFreq
+    ErrorPage e -> silent
 
 updateAndSetSounds : Model -> (Model, Cmd msg)
 updateAndSetSounds model = (model, setSounds (sounds model))
@@ -95,6 +105,7 @@ updateModel model msg =
     Start -> Finding 800 Up
     MouseMoved y -> setY model y
     MouseUp -> up model
+    Error e -> ErrorPage e
 
 update msg model = updateAndSetSounds (updateModel model msg)
 
@@ -114,11 +125,13 @@ view model =
       ]
     Finding target Up -> div [] [ text (String.fromInt target) ]
     Finding target (Down y) -> div [] [ text (String.fromInt target), text (String.fromInt y) ]
+    ErrorPage e -> div [] 
+      [ div [ attribute "class" "text" ] [ text e ] ]
 
 getTouchY obj =
-  case (Decode.decodeValue (field "touches" (field "0" (field "pageY" int))) obj) of
-    Ok y -> MouseMoved y
-    Err error -> MouseMoved 0
+  case (Decode.decodeValue (field "touches" (field "0" (field "pageY" float))) obj) of
+    Ok y -> MouseMoved (round y)
+    Err error -> Error (errorToString error)
 
 subscriptions _ = Sub.batch
   [ Browser.Events.onMouseMove (map MouseMoved (field "pageY" int))

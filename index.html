@@ -7,6 +7,8 @@
 <style>
 body {
 	font-family: proxima-soft, sans-serif;
+	/* https://stackoverflow.com/questions/29008194/disabling-androids-chrome-pull-down-to-refresh-feature */
+	overflow-y: hidden;
 }
 
 div.text {
@@ -106,6 +108,7 @@ function start() {
   var app = Elm.Main.init({
     node: document.getElementById('myapp')
   });
+
   app.ports.setSounds.subscribe(function(sounds) {
     if (!started && (sounds.target.gain > 0 || sounds.pointed.gain > 0)) {
       started = true;
