@@ -124,7 +124,7 @@ update msg model = updateAndSetSounds (updateModel model msg)
 view model =
   case model.currentPage of
     Init -> div []
-      [ div [ attribute "class" "text" ] [ text "Welcome to Pitcher! A game to train 'pitch matching' by ear. This game is best enjoyed alone or with headphones." ] 
+      [ div [ attribute "class" "text" ] [ text "This game helps you train 'pitch matching' by ear. It is best enjoyed alone or with headphones." ] 
       , div [ onClick Calibrate, attribute "class" "button" ] [ text "Calibrate volume" ]
       ]
     Calibrating -> div []
