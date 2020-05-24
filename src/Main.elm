@@ -22,7 +22,10 @@ main =
 port setSounds : Encode.Value -> Cmd msg
 port startAudio : () -> Cmd msg
 
-init () = (0, Cmd.none)
+type MouseState = Up | Down Int
+type Model = Init | Finding Int MouseState
+
+init () = (Init, Cmd.none)
 
 sounds model =
   Encode.object
@@ -40,14 +43,13 @@ sounds model =
 
 update msg model =
   case msg of
-    Start -> (model + 1, startAudio())
-    MouseMoved -> (model - 1, setSounds (sounds model))
+    Start -> (Finding 800 Up, startAudio())
+    MouseMoved -> (model, setSounds (sounds model))
 
 view model =
-  div []
-    [ button [ onClick Start ] [ text "Start!" ]
-    , div [] [ text (String.fromInt model) ]
-    ]
+    case model of
+      Init -> button [ onClick Start ] [ text "Start!" ]
+      Finding target _ -> div [] [ text (String.fromInt target) ]
 
 subscriptions model =
   Browser.Events.onMouseMove (Decode.succeed MouseMoved)
