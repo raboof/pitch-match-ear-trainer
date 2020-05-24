@@ -106,6 +106,7 @@ function start() {
   });
   app.ports.startAudio.subscribe(start);
   app.ports.setSounds.subscribe(function(sounds) {
+    console.log(sounds)
     targetGain.gain.value = sounds.target.gain;
     target.frequency.setValueAtTime(sounds.target.frequency, audioContext.currentTime);
 
