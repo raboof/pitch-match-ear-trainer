@@ -30,6 +30,7 @@ type Page =
 
 type alias Model = 
   { windowHeight : Int
+  , muted : Bool
   , currentPage : Page
   }
     
@@ -41,7 +42,8 @@ type Msg =
   MouseMoved Int |
   MouseUp |
   Error String |
-  Tick
+  Tick |
+  ToggleMute
 
 main =
   Browser.element
@@ -90,7 +92,14 @@ up model =
     Found -> Found
     ErrorPage e -> ErrorPage e
 
-init windowHeight = ({ windowHeight = windowHeight, currentPage = Init }, Cmd.none)
+init windowHeight =
+  (
+    { windowHeight = windowHeight
+    , muted = False
+    , currentPage = Init
+    },
+    Cmd.none
+  )
 
 encodeSounds tGain tFreq pGain pFreq =
   Encode.object
@@ -109,18 +118,21 @@ encodeSounds tGain tFreq pGain pFreq =
 silent = encodeSounds 0 0 0 0
 
 sounds model =
-  case model of
-    Init -> silent
-    Calibrating -> encodeSounds 0.4 800 0 0
-    Trying (Down pointedFreq) -> encodeSounds 0 0 0.4 pointedFreq
-    Trying Up -> silent
-    Finding targetFreq _ Up -> encodeSounds 0.4 targetFreq 0 0
-    Finding targetFreq _ (Down pointedFreq) -> encodeSounds 0.4 targetFreq 0.4 pointedFreq
-    Found -> silent
-    ErrorPage e -> silent
+  if model.muted
+  then silent
+  else
+    case model.currentPage of
+      Init -> silent
+      Calibrating -> encodeSounds 0.4 800 0 0
+      Trying (Down pointedFreq) -> encodeSounds 0 0 0.4 pointedFreq
+      Trying Up -> silent
+      Finding targetFreq _ Up -> encodeSounds 0.4 targetFreq 0 0
+      Finding targetFreq _ (Down pointedFreq) -> encodeSounds 0.4 targetFreq 0.4 pointedFreq
+      Found -> silent
+      ErrorPage e -> silent
 
 updateAndSetSounds : Model -> (Model, Cmd msg)
-updateAndSetSounds model = (model, setSounds (sounds model.currentPage))
+updateAndSetSounds model = (model, setSounds (sounds model))
 
 tick page =
   case page of
@@ -145,6 +157,7 @@ updateModel model msg =
     MouseUp -> { model | currentPage = up model.currentPage }
     Error e -> { model | currentPage = ErrorPage e }
     Tick -> { model | currentPage = tick model.currentPage }
+    ToggleMute -> { model | muted = not model.muted }
 
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
@@ -183,6 +196,7 @@ view model =
         --, if matches target pointed
         --  then div [] [ text "Match!" ] 
         --  else div [] [ text "No match yet..." ] 
+        , div [ onClick ToggleMute, attribute "class" "mute" ] [ text (if model.muted then "\u{1f507}" else "\u{1f509}") ]
         ]
     Found -> div []
       [ div [ attribute "class" "text" ] [ text "Nice! You got it!" ]
