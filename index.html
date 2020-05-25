@@ -3,6 +3,7 @@
   <meta charset="UTF-8">
   <title>Main</title>
   <script src="main.js"></script>
+  <script src="js/Tone.js"></script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=0" />
 <style>
 body {
@@ -64,6 +65,10 @@ var started = false;
 const AudioContext = window.AudioContext || window.webkitAudioContext;
 const audioContext = new AudioContext();
 
+const targetOsc = new Tone.OmniOscillator(0, "sawtooth")
+targetOsc.partialCount = 8;
+targetOsc.toMaster()
+
 const target = audioContext.createOscillator();
 target.type = 'sine';
 target.frequency.setValueAtTime(800, audioContext.currentTime);
@@ -98,17 +103,18 @@ var app = Elm.Main.init({
 
 app.ports.setSounds.subscribe(function(sounds) {
   if (!started && (sounds.target.gain > 0 || sounds.pointed.gain > 0)) {
+    Tone.start()
     started = true;
-    target.start(audioContext.currentTime);
     pointed.start(audioContext.currentTime);
   }
-  if (targetGain.gain.value != sounds.target.gain) {
-    targetGain.gain.value = sounds.target.gain;
+  if (sounds.target.gain == 0 && targetOsc.state == "started") {
+	  console.log("stopping");
+	  targetOsc.stop();
+  } else if (sounds.target.gain > 0 && targetOsc.state == "stopped") {
+	  console.log("starting");
+	  targetOsc.frequency.value = sounds.target.frequency
+	  targetOsc.start();
   }
-  if (target.frequency.value != sounds.target.frequency) {
-    target.frequency.setValueAtTime(sounds.target.frequency, audioContext.currentTime);
-  }
-
   if (pointedGain.gain.value != sounds.pointed.gain) {
      pointedGain.gain.value = sounds.pointed.gain;
   }
