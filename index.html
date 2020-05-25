@@ -6,46 +6,51 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=0" />
 <style>
 body {
-	font-family: proxima-soft, sans-serif;
-	/* https://stackoverflow.com/questions/29008194/disabling-androids-chrome-pull-down-to-refresh-feature */
-	overflow-y: hidden;
-	-moz-user-select: -moz-none;
+  font-family: proxima-soft, sans-serif;
+  /* https://stackoverflow.com/questions/29008194/disabling-androids-chrome-pull-down-to-refresh-feature */
+  overflow-y: hidden;
+  -moz-user-select: -moz-none;
         -khtml-user-select: none;
         -webkit-user-select: none;
-	-ms-user-select: none;
-	user-select: none;
+  -ms-user-select: none;
+  user-select: none;
 }
 
 div.text {
-	font-weight: 300;
-	font-size: 1em;
-	background: lightblue;
-	margin: 3em;
-	padding: 1em;
+  font-weight: 300;
+  font-size: 1em;
+  background: lightblue;
+  margin: 3em;
+  padding: 1em;
 }
 
 div.button {
-	text-align: center;
-	font-weight: 700;
-	font-size: 2em;
-	display: block;
-	background: blue;
-	color: white;
-	margin: 1em;
-	padding-top: 1em;
-	padding-bottom: 1em;
+  text-align: center;
+  font-weight: 700;
+  font-size: 2em;
+  display: block;
+  background: blue;
+  color: white;
+  margin: 1em;
+  padding-top: 1em;
+  padding-bottom: 1em;
 }
 
 div.button.disabled {
-	background: grey;
+  background: grey;
 }
 
 div.mute {
-	position: absolute;
-	bottom: 0px;
-	right: 0px;
-	padding: 1em;
-	font-size: 3em;
+  position: absolute;
+  bottom: 0px;
+  right: 0px;
+  padding: 1em;
+  font-size: 3em;
+}
+
+div.huge {
+  font-size: 4em;
+  text-align: center;
 }
 
 </style>
@@ -55,9 +60,6 @@ div.mute {
   <div id="myapp"></div>
   <script>
 var started = false;
-
-const minPitch = 300
-const maxPitch = 2000
 
 const AudioContext = window.AudioContext || window.webkitAudioContext;
 const audioContext = new AudioContext();
@@ -80,79 +82,46 @@ pointed.connect(pointedGain);
 pointedGain.connect(audioContext.destination);
 
 function pause() {
-	pointedGain.gain.value = 0;
-	targetGain.gain.value = 0;
+  pointedGain.gain.value = 0;
+  targetGain.gain.value = 0;
 }
 
 function resume() {
-	pointedGain.gain.value = 0.4;
-	targetGain.gain.value = 0.4;
+  pointedGain.gain.value = 0.4;
+  targetGain.gain.value = 0.4;
 }
 
-function start() {
-	function updatePitch(e) {
-		const curY = (window.Event) ? e.pageY : event.clientY + (document.documentElement.scrollTop ? document.documentElement.scrollTop : document.body.scrollTop);
-	
-		const newPitch = maxPitch - ((maxPitch - minPitch) * (curY) / window.innerHeight)
-		pointed.frequency.setValueAtTime(newPitch, audioContext.currentTime);
-		resume();
-	}
-	
-	function updateTouchPitch() {
-		const curY = event.touches[0].pageY;
-	
-		const newPitch = maxPitch - ((maxPitch - minPitch) * (curY) / window.innerHeight)
-		pointed.frequency.setValueAtTime(newPitch, audioContext.currentTime);
-		resume();
-	}
+var app = Elm.Main.init({
+  node: document.getElementById('myapp'),
+  flags: window.innerHeight
+});
 
-	function startPoint() {
-		pointedGain.gain.value = 0.4;
-	}
-	function stopPoint() {
-		pointedGain.gain.value = 0;
-	}
-	function togglePoint() {
-		if (pointedGain.gain.value == 0) {
-			startPoint();
-		} else {
-			stopPoint();
-		}
-	}
-        document.onclick = togglePoint;
+app.ports.setSounds.subscribe(function(sounds) {
+  if (!started && (sounds.target.gain > 0 || sounds.pointed.gain > 0)) {
+    started = true;
+    target.start(audioContext.currentTime);
+    pointed.start(audioContext.currentTime);
+  }
+  if (targetGain.gain.value != sounds.target.gain) {
+    targetGain.gain.value = sounds.target.gain;
+  }
+  if (target.frequency.value != sounds.target.frequency) {
+    target.frequency.setValueAtTime(sounds.target.frequency, audioContext.currentTime);
   }
 
-  var app = Elm.Main.init({
-    node: document.getElementById('myapp'),
-    flags: window.innerHeight
-  });
-
-  app.ports.setSounds.subscribe(function(sounds) {
-    if (!started && (sounds.target.gain > 0 || sounds.pointed.gain > 0)) {
-      started = true;
-      target.start(audioContext.currentTime);
-      pointed.start(audioContext.currentTime);
-    }
-    if (targetGain.gain.value != sounds.target.gain) {
-      targetGain.gain.value = sounds.target.gain;
-    }
-    if (target.frequency.value != sounds.target.frequency) {
-      target.frequency.setValueAtTime(sounds.target.frequency, audioContext.currentTime);
-    }
-
-    if (pointedGain.gain.value != sounds.pointed.gain) {
-       pointedGain.gain.value = sounds.pointed.gain;
-    }
-    if (pointed.frequency.value != sounds.pointed.frequency) {
-      pointed.frequency.setValueAtTime(sounds.pointed.frequency, audioContext.currentTime);
-    }
-  });
-  document.onmouseout = app.ports.onMouseOut;
-  document.onmouseenter = app.ports.onMouseEnter;
-  document.addEventListener("touchmove", app.ports.onTouchMove.send, false);
-  document.addEventListener("touchstart", app.ports.onTouchStart.send, false);
-  document.addEventListener("touchcancel", app.ports.onTouchCancel.send, false);
-  document.addEventListener("touchend", app.ports.onTouchEnd.send, false);
-  </script>
+  if (pointedGain.gain.value != sounds.pointed.gain) {
+     pointedGain.gain.value = sounds.pointed.gain;
+  }
+  if (pointed.frequency.value != sounds.pointed.frequency) {
+    pointed.frequency.setValueAtTime(sounds.pointed.frequency, audioContext.currentTime);
+  }
+});
+document.onmouseout = app.ports.onMouseOut;
+document.onmouseenter = app.ports.onMouseEnter;
+document.addEventListener("touchmove", app.ports.onTouchMove.send, false);
+document.addEventListener("touchstart", app.ports.onTouchStart.send, false);
+document.addEventListener("touchcancel", app.ports.onTouchCancel.send, false);
+document.addEventListener("touchend", app.ports.onTouchEnd.send, false);
+</script>
 </body>
 </html>

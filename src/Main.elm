@@ -180,6 +180,7 @@ view model =
     Trying goingFor _ -> div []
       [ div [ attribute "class" "text" ] [ text "You can 'play' by touching the screen. Try it!" ] 
       , div [ if goingFor > 3 then (onClick Start) else (attribute "class" "disabled"), attribute "class" "button" ] [ text "Got it!" ]
+      , div [ attribute "class" "huge" ] [ text (if goingFor < 2 then "\u{1f446}" else "") ]
       ]
     --Finding target _ Up -> div [] [ text (String.fromInt target) ]
     --Finding target okFor (Down pointed) ->
