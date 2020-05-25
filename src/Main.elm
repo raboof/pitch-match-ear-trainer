@@ -16,6 +16,7 @@ import Html.Events exposing (onClick, on)
 import Html.Attributes exposing (attribute)
 
 type alias Frequency = Int
+type alias GoingFor = Int
 type alias OkFor = Int
 
 type PointState = Up | Down Frequency
@@ -23,7 +24,7 @@ type PointState = Up | Down Frequency
 type Page = 
   Init |
   Calibrating |
-  Trying PointState |
+  Trying GoingFor PointState |
   Finding Frequency OkFor PointState |
   Found |
   ErrorPage String
@@ -76,7 +77,7 @@ setY model y =
   case model.currentPage of
     Init -> Init
     Calibrating -> Calibrating
-    Trying _ -> Trying (Down (yToFrequency model.windowHeight y))
+    Trying goingFor _ -> Trying goingFor (Down (yToFrequency model.windowHeight y))
     Finding target okFor _ ->
       let current = yToFrequency model.windowHeight y
       in Finding target okFor (Down current)
@@ -87,7 +88,7 @@ up model =
   case model of
     Init -> Init
     Calibrating -> Calibrating
-    Trying _ -> Trying Up
+    Trying goingFor _ -> Trying goingFor Up
     Finding t _ _ -> Finding t 0 Up
     Found -> Found
     ErrorPage e -> ErrorPage e
@@ -124,8 +125,8 @@ sounds model =
     case model.currentPage of
       Init -> silent
       Calibrating -> encodeSounds 0.4 800 0 0
-      Trying (Down pointedFreq) -> encodeSounds 0 0 0.4 pointedFreq
-      Trying Up -> silent
+      Trying _ (Down pointedFreq) -> encodeSounds 0 0 0.4 pointedFreq
+      Trying _ Up -> silent
       Finding targetFreq _ Up -> encodeSounds 0.4 targetFreq 0 0
       Finding targetFreq _ (Down pointedFreq) -> encodeSounds 0.4 targetFreq 0.4 pointedFreq
       Found -> silent
@@ -136,6 +137,7 @@ updateAndSetSounds model = (model, setSounds (sounds model))
 
 tick page =
   case page of
+    Trying goingFor (Down freq) -> Trying (goingFor + 1) (Down freq)
     Finding target okFor (Down current) ->
       if (okFor > 5)
       then Found
@@ -150,7 +152,7 @@ updateModel model msg =
   -- Later split out per current page type
   case msg of
     Calibrate -> { model | currentPage = Calibrating }
-    Try -> { model | currentPage = Trying Up }
+    Try -> { model | currentPage = Trying 0 Up }
     Start -> model
     NewChallenge target -> { model | currentPage = Finding target 0 Up }
     MouseMoved y -> { model | currentPage = setY model y }
@@ -175,9 +177,9 @@ view model =
       [ div [ attribute "class" "text" ] [ text "You should now hear a 'target pitch'. Later you will be challenged to match this pitch. Take a minute to adjust your volume so it is comfortable" ] 
       , div [ onClick Try, attribute "class" "button" ] [ text "I'm happy" ]
       ]
-    Trying _ -> div []
+    Trying goingFor _ -> div []
       [ div [ attribute "class" "text" ] [ text "You can 'play' by touching the screen. Try it!" ] 
-      , div [ onClick Start, attribute "class" "button" ] [ text "Got it!" ]
+      , div [ if goingFor > 3 then (onClick Start) else (attribute "class" "disabled"), attribute "class" "button" ] [ text "Got it!" ]
       ]
     --Finding target _ Up -> div [] [ text (String.fromInt target) ]
     --Finding target okFor (Down pointed) ->
