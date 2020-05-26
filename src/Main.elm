@@ -32,7 +32,7 @@ type Page =
 type alias Model = 
   { windowHeight : Int
   , muted : Bool
-  , currentPage : Page
+  , page : Page
   }
     
 type Msg =
@@ -74,7 +74,7 @@ matches target current = abs (target - current) < 7
 
 setY : Model -> Int -> Page
 setY model y =
-  case model.currentPage of
+  case model.page of
     Init -> Init
     Calibrating -> Calibrating
     Trying goingFor _ -> Trying goingFor (Down (yToFrequency model.windowHeight y))
@@ -97,7 +97,7 @@ init windowHeight =
   (
     { windowHeight = windowHeight
     , muted = False
-    , currentPage = Init
+    , page = Init
     },
     Cmd.none
   )
@@ -122,7 +122,7 @@ sounds model =
   if model.muted
   then silent
   else
-    case model.currentPage of
+    case model.page of
       Init -> silent
       Calibrating -> encodeSounds 0.4 800 0 0
       Trying _ (Down pointedFreq) -> encodeSounds 0 0 0.4 pointedFreq
@@ -131,9 +131,6 @@ sounds model =
       Finding targetFreq _ (Down pointedFreq) -> encodeSounds 0.4 targetFreq 0.4 pointedFreq
       Found -> silent
       ErrorPage e -> silent
-
-updateAndSetSounds : Model -> (Model, Cmd msg)
-updateAndSetSounds model = (model, setSounds (sounds model))
 
 tick page =
   case page of
@@ -149,26 +146,35 @@ tick page =
     _ -> page
 
 updateModel model msg =
-  -- Later split out per current page type
   case msg of
-    Calibrate -> { model | currentPage = Calibrating }
-    Try -> { model | currentPage = Trying 0 Up }
+    Calibrate -> { model | page = Calibrating }
+    Try -> { model | page = Trying 0 Up }
     Start -> model
-    NewChallenge target -> { model | currentPage = Finding target 0 Up }
-    MouseMoved y -> { model | currentPage = setY model y }
-    MouseUp -> { model | currentPage = up model.currentPage }
-    Error e -> { model | currentPage = ErrorPage e }
-    Tick -> { model | currentPage = tick model.currentPage }
+    NewChallenge target -> { model | page = Finding target 0 Up }
+    MouseMoved y -> { model | page = setY model y }
+    MouseUp -> { model | page = up model.page }
+    Error e -> { model | page = ErrorPage e }
+    Tick -> { model | page = tick model.page }
     ToggleMute -> { model | muted = not model.muted }
+
+effect msg =
+  case msg of
+    Start -> Random.generate NewChallenge (Random.int (minPitch+10) (maxPitch-10))
+    _ -> Cmd.none
+
+transition from to =
+  case (from, to) of
+    _ -> Cmd.none
 
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
-  case msg of
-    Start -> (model, Random.generate NewChallenge (Random.int (minPitch+10) (maxPitch-10)))
-    _ -> updateAndSetSounds (updateModel model msg)
+  let
+    updated = updateModel model msg
+  in
+    (updated, Cmd.batch [ effect msg, transition model.page updated.page, setSounds (sounds updated) ])
 
 view model =
-  case model.currentPage of
+  case model.page of
     Init -> div []
       [ div [ attribute "class" "text" ] [ text "This game helps you train 'pitch matching' by ear. It is best enjoyed alone or with headphones." ] 
       , div [ onClick Calibrate, attribute "class" "button" ] [ text "Calibrate volume" ]

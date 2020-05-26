@@ -88,7 +88,7 @@ var app = Elm.Main.init({
 
 app.ports.setSounds.subscribe(function(sounds) {
   if (!started && (sounds.target.gain > 0 || sounds.pointed.gain > 0)) {
-    Tone.start()
+    Tone.start();
     started = true;
   }
   if (sounds.target.gain == 0 && targetOsc.state == "started") {
