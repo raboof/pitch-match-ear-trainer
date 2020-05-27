@@ -67,6 +67,7 @@ const audioContext = new AudioContext();
 
 const targetOsc = new Tone.OmniOscillator(0, "sawtooth")
 targetOsc.partialCount = 8;
+targetOsc.volume.value = -50;
 
 const targetPhaser = new Tone.Phaser(0.2, 2)
 targetOsc.connect(targetPhaser);
@@ -74,6 +75,7 @@ targetPhaser.toMaster()
 
 const pointedOsc = new Tone.OmniOscillator(0, "sine")
 pointedOsc.partialCount = 5;
+pointedOsc.volume.value = -50;
 
 const pointedPhaser = new Tone.Phaser(0.1, 2)
 pointedOsc.connect(targetPhaser);
@@ -81,11 +83,16 @@ pointedPhaser.toMaster()
 
 pointedOsc.toMaster();
 
+const success = new Tone.Player("assets/511484__mattleschuck__success-bell.wav");
+success.toMaster();
+
 var app = Elm.Main.init({
   node: document.getElementById('myapp'),
   flags: window.innerHeight
 });
-
+app.ports.success.subscribe(function() {
+  success.start();
+});
 app.ports.setSounds.subscribe(function(sounds) {
   if (!started && (sounds.target.gain > 0 || sounds.pointed.gain > 0)) {
     Tone.start();

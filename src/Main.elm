@@ -55,7 +55,7 @@ main =
   }
 
 port setSounds : Encode.Value -> Cmd msg
-port startAudio : () -> Cmd msg
+port success : () -> Cmd msg
 port onMouseEnter : ({ pageY : Int } -> msg) -> Sub msg
 port onMouseOut : ({} -> msg) -> Sub msg
 port onTouchStart : (Decode.Value -> msg) -> Sub msg
@@ -164,6 +164,9 @@ effect msg =
 
 transition from to =
   case (from, to) of
+    (_, Found) ->
+      if from /= Found then (success ())
+      else Cmd.none
     _ -> Cmd.none
 
 update : Msg -> Model -> (Model, Cmd Msg)
