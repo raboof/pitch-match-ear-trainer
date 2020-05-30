@@ -339,16 +339,15 @@ view model =
         Finding target _ _ ->
             div
                 []
-                [ text "target "
-                , text (String.fromInt target)
-
-                --, text "pointed "
-                --, text (String.fromInt pointed)
-                --, text "diff "
-                --, text (String.fromInt (abs (target - pointed)))
-                --, text " ok for: "
-                --, text (String.fromInt okFor)
-                , div [ attribute "class" "text" ] [ text "Try to match the 2 pitches" ]
+                [ -- text "target "
+                  --, text (String.fromInt target)
+                  --, text "pointed "
+                  --, text (String.fromInt pointed)
+                  --, text "diff "
+                  --, text (String.fromInt (abs (target - pointed)))
+                  --, text " ok for: "
+                  --, text (String.fromInt okFor)
+                  div [ attribute "class" "text" ] [ text "Try to match the 2 pitches" ]
 
                 --, if matches target pointed
                 --  then div [] [ text "Match!" ]
