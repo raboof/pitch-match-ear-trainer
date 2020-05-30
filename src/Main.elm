@@ -226,12 +226,11 @@ tick page =
             if okFor > 5 then
                 Found
 
-            else
-                if matches target current then
-                    Finding target (okFor + 1) (Down current)
+            else if matches target current then
+                Finding target (okFor + 1) (Down current)
 
-                else
-                    Finding target 0 (Down current)
+            else
+                Finding target 0 (Down current)
 
         _ ->
             page
