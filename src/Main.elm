@@ -223,7 +223,7 @@ tick page =
             Trying (goingFor + 1) (Down freq)
 
         Finding target okFor (Down current) ->
-            if okFor > 5 then
+            if okFor > 7 then
                 Found
 
             else if matches target current then
