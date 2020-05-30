@@ -1,0 +1,125 @@
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Main</title>
+  <script src="main.js"></script>
+  <script src="js/Tone.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=0" />
+<style>
+body {
+  font-family: proxima-soft, sans-serif;
+  /* https://stackoverflow.com/questions/29008194/disabling-androids-chrome-pull-down-to-refresh-feature */
+  overflow-y: hidden;
+  -moz-user-select: -moz-none;
+        -khtml-user-select: none;
+        -webkit-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+div.text {
+  font-weight: 300;
+  font-size: 1em;
+  background: lightblue;
+  margin: 3em;
+  padding: 1em;
+}
+
+div.button {
+  text-align: center;
+  font-weight: 700;
+  font-size: 2em;
+  display: block;
+  background: blue;
+  color: white;
+  margin: 1em;
+  padding-top: 1em;
+  padding-bottom: 1em;
+}
+
+div.button.disabled {
+  background: grey;
+}
+
+div.mute {
+  position: absolute;
+  bottom: 0px;
+  right: 0px;
+  padding: 1em;
+  font-size: 3em;
+}
+
+div.huge {
+  font-size: 4em;
+  text-align: center;
+}
+
+</style>
+</head>
+
+<body>
+  <div id="myapp"></div>
+  <script>
+var started = false;
+
+const AudioContext = window.AudioContext || window.webkitAudioContext;
+const audioContext = new AudioContext();
+
+const targetOsc = new Tone.OmniOscillator(0, "sawtooth")
+targetOsc.partialCount = 8;
+targetOsc.volume.value = -30;
+
+const targetPhaser = new Tone.Phaser(0.2, 2)
+targetOsc.connect(targetPhaser);
+targetPhaser.toMaster()
+
+const pointedOsc = new Tone.OmniOscillator(0, "sine")
+pointedOsc.partialCount = 5;
+pointedOsc.volume.value = -30;
+
+const pointedPhaser = new Tone.Phaser(0.1, 2)
+pointedOsc.connect(targetPhaser);
+pointedPhaser.toMaster()
+
+pointedOsc.toMaster();
+
+const success = new Tone.Player("assets/511484__mattleschuck__success-bell-amplified.wav");
+success.toMaster();
+
+var app = Elm.Main.init({
+  node: document.getElementById('myapp'),
+  flags: window.innerHeight
+});
+app.ports.success.subscribe(function() {
+  success.start();
+});
+app.ports.setSounds.subscribe(function(sounds) {
+  if (!started && (sounds.target.gain > 0 || sounds.pointed.gain > 0)) {
+    Tone.start();
+    started = true;
+  }
+  if (sounds.target.gain == 0 && targetOsc.state == "started") {
+    targetOsc.stop();
+  } else if (sounds.target.gain > 0 && targetOsc.state == "stopped") {
+    targetOsc.frequency.value = sounds.target.frequency
+    targetOsc.start();
+  }
+
+  if (sounds.pointed.gain == 0 && pointedOsc.state == "started") {
+    console.log("stopping");
+    pointedOsc.stop();
+  } else if (sounds.pointed.gain > 0 && pointedOsc.state == "stopped") {
+    console.log("starting");
+    pointedOsc.start();
+  }
+  pointedOsc.frequency.value = sounds.pointed.frequency
+});
+document.onmouseout = app.ports.onMouseOut;
+document.onmouseenter = app.ports.onMouseEnter;
+document.addEventListener("touchmove", app.ports.onTouchMove.send, false);
+document.addEventListener("touchstart", app.ports.onTouchStart.send, false);
+document.addEventListener("touchcancel", app.ports.onTouchCancel.send, false);
+document.addEventListener("touchend", app.ports.onTouchEnd.send, false);
+</script>
+</body>
+</html>
