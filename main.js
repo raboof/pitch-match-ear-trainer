@@ -6276,7 +6276,7 @@ var $author$project$Main$tick = function (page) {
 					var target = page.a;
 					var okFor = page.b;
 					var current = page.c.a;
-					return (okFor > 5) ? $author$project$Main$Found : (A2($author$project$Main$matches, target, current) ? A3(
+					return (okFor > 7) ? $author$project$Main$Found : (A2($author$project$Main$matches, target, current) ? A3(
 						$author$project$Main$Finding,
 						target,
 						okFor + 1,
