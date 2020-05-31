@@ -30,11 +30,15 @@ type PointState
     | Down Frequency
 
 
+type alias WithHints =
+    Bool
+
+
 type Page
     = Init
     | Calibrating
     | Trying GoingFor PointState
-    | Finding Frequency OkFor PointState
+    | Finding Frequency OkFor PointState WithHints
     | Found
     | ErrorPage String
 
@@ -49,8 +53,8 @@ type alias Model =
 type Msg
     = Calibrate
     | Try
-    | Start
-    | NewChallenge Frequency
+    | Start WithHints
+    | NewChallenge WithHints Frequency
     | MouseMoved Int
     | MouseUp
     | Error String
@@ -121,12 +125,12 @@ setY model y =
         Trying goingFor _ ->
             Trying goingFor (Down (yToFrequency model.windowHeight y))
 
-        Finding target okFor _ ->
+        Finding target okFor _ withHints ->
             let
                 current =
                     yToFrequency model.windowHeight y
             in
-            Finding target okFor (Down current)
+            Finding target okFor (Down current) withHints
 
         Found ->
             Found
@@ -146,8 +150,8 @@ up model =
         Trying goingFor _ ->
             Trying goingFor Up
 
-        Finding t _ _ ->
-            Finding t 0 Up
+        Finding t _ _ withHints ->
+            Finding t 0 Up withHints
 
         Found ->
             Found
@@ -204,10 +208,10 @@ sounds model =
             Trying _ Up ->
                 silent
 
-            Finding targetFreq _ Up ->
+            Finding targetFreq _ Up _ ->
                 encodeSounds 0.4 targetFreq 0 0
 
-            Finding targetFreq _ (Down pointedFreq) ->
+            Finding targetFreq _ (Down pointedFreq) _ ->
                 encodeSounds 0.4 targetFreq 0.4 pointedFreq
 
             Found ->
@@ -222,20 +226,21 @@ tick page =
         Trying goingFor (Down freq) ->
             Trying (goingFor + 1) (Down freq)
 
-        Finding target okFor (Down current) ->
+        Finding target okFor (Down current) withHints ->
             if okFor > 7 then
                 Found
 
             else if matches target current then
-                Finding target (okFor + 1) (Down current)
+                Finding target (okFor + 1) (Down current) withHints
 
             else
-                Finding target 0 (Down current)
+                Finding target 0 (Down current) withHints
 
         _ ->
             page
 
 
+updateModel : Model -> Msg -> Model
 updateModel model msg =
     case msg of
         Calibrate ->
@@ -244,11 +249,11 @@ updateModel model msg =
         Try ->
             { model | page = Trying 0 Up }
 
-        Start ->
+        Start withHints ->
             model
 
-        NewChallenge target ->
-            { model | page = Finding target 0 Up }
+        NewChallenge withHints target ->
+            { model | page = Finding target 0 Up withHints }
 
         MouseMoved y ->
             { model | page = setY model y }
@@ -266,10 +271,11 @@ updateModel model msg =
             { model | muted = not model.muted }
 
 
+effect : Msg -> Cmd Msg
 effect msg =
     case msg of
-        Start ->
-            Random.generate NewChallenge (Random.int (minPitch + 10) (maxPitch - 10))
+        Start withHints ->
+            Random.generate (NewChallenge withHints) (Random.int (minPitch + 10) (maxPitch - 10))
 
         _ ->
             Cmd.none
@@ -316,7 +322,7 @@ view model =
                 [ div [ attribute "class" "text" ] [ text "You can 'play' by touching the screen. Try it!" ]
                 , div
                     [ if goingFor > 3 then
-                        onClick Start
+                        onClick (Start True)
 
                       else
                         attribute "class" "disabled"
@@ -336,7 +342,7 @@ view model =
 
         --Finding target _ Up -> div [] [ text (String.fromInt target) ]
         --Finding target okFor (Down pointed) ->
-        Finding target _ _ ->
+        Finding target okFor pointState withHints ->
             div
                 []
                 [ -- text "target "
@@ -352,6 +358,25 @@ view model =
                 --, if matches target pointed
                 --  then div [] [ text "Match!" ]
                 --  else div [] [ text "No match yet..." ]
+                , if withHints then
+                    div [ attribute "class" "hint" ]
+                        [ case pointState of
+                            Up ->
+                                text "touch the screen..."
+
+                            Down current ->
+                                if okFor > 0 then
+                                    text "hold it..."
+
+                                else if current < target then
+                                    text "you're flat, move up"
+
+                                else
+                                    text "you're sharp, move down"
+                        ]
+
+                  else
+                    div [] []
                 , div [ onClick ToggleMute, attribute "class" "mute" ]
                     [ text
                         (if model.muted then
@@ -366,7 +391,7 @@ view model =
         Found ->
             div []
                 [ div [ attribute "class" "text" ] [ text "Nice! You got it!" ]
-                , div [ onClick Start, attribute "class" "button" ] [ text "Play another" ]
+                , div [ onClick (Start False), attribute "class" "button" ] [ text "Play another" ]
                 ]
 
         ErrorPage e ->
