@@ -418,7 +418,7 @@ view model =
         Settings ->
             div []
                 [ div [ attribute "class" "details" ]
-                    [ text "This game is open source: participate in its development at "
+                    [ text "This game is open source: participate "
                     , a [ attribute "href" "https://github.com/raboof/pitch-match-ear-trainer" ] [ text "here" ]
                     , text ". Thanks to:"
                     , ul []
