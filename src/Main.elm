@@ -108,14 +108,25 @@ maxPitch =
 yToFrequency : Int -> Int -> Frequency
 yToFrequency intWindowHeight intY =
     let
-      windowHeight = toFloat intWindowHeight
-      min = toFloat minPitch
-      max = toFloat maxPitch
-      y = windowHeight - (toFloat intY)
-      a = min
-      b = (max/ min) ^ (1.0 / windowHeight)
+        windowHeight =
+            toFloat intWindowHeight
+
+        min =
+            toFloat minPitch
+
+        max =
+            toFloat maxPitch
+
+        y =
+            windowHeight - toFloat intY
+
+        a =
+            min
+
+        b =
+            (max / min) ^ (1.0 / windowHeight)
     in
-      round (a * (b ^ y))
+    round (a * (b ^ y))
 
 
 matches : Frequency -> Frequency -> Bool
