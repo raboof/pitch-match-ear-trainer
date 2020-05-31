@@ -5947,9 +5947,10 @@ var $author$project$Main$subscriptions = function (_v0) {
 				})
 			]));
 };
-var $author$project$Main$NewChallenge = function (a) {
-	return {$: 'NewChallenge', a: a};
-};
+var $author$project$Main$NewChallenge = F2(
+	function (a, b) {
+		return {$: 'NewChallenge', a: a, b: b};
+	});
 var $elm$random$Random$Generate = function (a) {
 	return {$: 'Generate', a: a};
 };
@@ -6087,9 +6088,10 @@ var $author$project$Main$maxPitch = 1000;
 var $author$project$Main$minPitch = 300;
 var $author$project$Main$effect = function (msg) {
 	if (msg.$ === 'Start') {
+		var withHints = msg.a;
 		return A2(
 			$elm$random$Random$generate,
-			$author$project$Main$NewChallenge,
+			$author$project$Main$NewChallenge(withHints),
 			A2($elm$random$Random$int, $author$project$Main$minPitch + 10, $author$project$Main$maxPitch - 10));
 	} else {
 		return $elm$core$Platform$Cmd$none;
@@ -6201,9 +6203,9 @@ var $author$project$Main$Calibrating = {$: 'Calibrating'};
 var $author$project$Main$ErrorPage = function (a) {
 	return {$: 'ErrorPage', a: a};
 };
-var $author$project$Main$Finding = F3(
-	function (a, b, c) {
-		return {$: 'Finding', a: a, b: b, c: c};
+var $author$project$Main$Finding = F4(
+	function (a, b, c, d) {
+		return {$: 'Finding', a: a, b: b, c: c, d: d};
 	});
 var $author$project$Main$Trying = F2(
 	function (a, b) {
@@ -6236,12 +6238,14 @@ var $author$project$Main$setY = F2(
 			case 'Finding':
 				var target = _v0.a;
 				var okFor = _v0.b;
+				var withHints = _v0.d;
 				var current = A2($author$project$Main$yToFrequency, model.windowHeight, y);
-				return A3(
+				return A4(
 					$author$project$Main$Finding,
 					target,
 					okFor,
-					$author$project$Main$Down(current));
+					$author$project$Main$Down(current),
+					withHints);
 			case 'Found':
 				return $author$project$Main$Found;
 			default:
@@ -6276,15 +6280,18 @@ var $author$project$Main$tick = function (page) {
 					var target = page.a;
 					var okFor = page.b;
 					var current = page.c.a;
-					return (okFor > 7) ? $author$project$Main$Found : (A2($author$project$Main$matches, target, current) ? A3(
+					var withHints = page.d;
+					return (okFor > 7) ? $author$project$Main$Found : (A2($author$project$Main$matches, target, current) ? A4(
 						$author$project$Main$Finding,
 						target,
 						okFor + 1,
-						$author$project$Main$Down(current)) : A3(
+						$author$project$Main$Down(current),
+						withHints) : A4(
 						$author$project$Main$Finding,
 						target,
 						0,
-						$author$project$Main$Down(current)));
+						$author$project$Main$Down(current),
+						withHints));
 				} else {
 					break _v0$2;
 				}
@@ -6305,7 +6312,8 @@ var $author$project$Main$up = function (model) {
 			return A2($author$project$Main$Trying, goingFor, $author$project$Main$Up);
 		case 'Finding':
 			var t = model.a;
-			return A3($author$project$Main$Finding, t, 0, $author$project$Main$Up);
+			var withHints = model.d;
+			return A4($author$project$Main$Finding, t, 0, $author$project$Main$Up, withHints);
 		case 'Found':
 			return $author$project$Main$Found;
 		default:
@@ -6327,13 +6335,15 @@ var $author$project$Main$updateModel = F2(
 						page: A2($author$project$Main$Trying, 0, $author$project$Main$Up)
 					});
 			case 'Start':
+				var withHints = msg.a;
 				return model;
 			case 'NewChallenge':
-				var target = msg.a;
+				var withHints = msg.a;
+				var target = msg.b;
 				return _Utils_update(
 					model,
 					{
-						page: A3($author$project$Main$Finding, target, 0, $author$project$Main$Up)
+						page: A4($author$project$Main$Finding, target, 0, $author$project$Main$Up, withHints)
 					});
 			case 'MouseMoved':
 				var y = msg.a;
@@ -6382,7 +6392,9 @@ var $author$project$Main$update = F2(
 					])));
 	});
 var $author$project$Main$Calibrate = {$: 'Calibrate'};
-var $author$project$Main$Start = {$: 'Start'};
+var $author$project$Main$Start = function (a) {
+	return {$: 'Start', a: a};
+};
 var $author$project$Main$ToggleMute = {$: 'ToggleMute'};
 var $author$project$Main$Try = {$: 'Try'};
 var $elm$virtual_dom$VirtualDom$attribute = F2(
@@ -6493,7 +6505,8 @@ var $author$project$Main$view = function (model) {
 						$elm$html$Html$div,
 						_List_fromArray(
 							[
-								(goingFor > 3) ? $elm$html$Html$Events$onClick($author$project$Main$Start) : A2($elm$html$Html$Attributes$attribute, 'class', 'disabled'),
+								(goingFor > 3) ? $elm$html$Html$Events$onClick(
+								$author$project$Main$Start(true)) : A2($elm$html$Html$Attributes$attribute, 'class', 'disabled'),
 								A2($elm$html$Html$Attributes$attribute, 'class', 'button')
 							]),
 						_List_fromArray(
@@ -6514,6 +6527,9 @@ var $author$project$Main$view = function (model) {
 					]));
 		case 'Finding':
 			var target = _v0.a;
+			var okFor = _v0.b;
+			var pointState = _v0.c;
+			var withHints = _v0.d;
 			return A2(
 				$elm$html$Html$div,
 				_List_Nil,
@@ -6529,6 +6545,23 @@ var $author$project$Main$view = function (model) {
 							[
 								$elm$html$Html$text('Try to match the 2 pitches')
 							])),
+						withHints ? A2(
+						$elm$html$Html$div,
+						_List_fromArray(
+							[
+								A2($elm$html$Html$Attributes$attribute, 'class', 'hint')
+							]),
+						_List_fromArray(
+							[
+								function () {
+								if (pointState.$ === 'Up') {
+									return $elm$html$Html$text('touch the screen...');
+								} else {
+									var current = pointState.a;
+									return (okFor > 0) ? $elm$html$Html$text('hold it...') : ((_Utils_cmp(current, target) < 0) ? $elm$html$Html$text('you\'re flat, move up') : $elm$html$Html$text('you\'re sharp, move down'));
+								}
+							}()
+							])) : A2($elm$html$Html$div, _List_Nil, _List_Nil),
 						A2(
 						$elm$html$Html$div,
 						_List_fromArray(
@@ -6562,7 +6595,8 @@ var $author$project$Main$view = function (model) {
 						$elm$html$Html$div,
 						_List_fromArray(
 							[
-								$elm$html$Html$Events$onClick($author$project$Main$Start),
+								$elm$html$Html$Events$onClick(
+								$author$project$Main$Start(false)),
 								A2($elm$html$Html$Attributes$attribute, 'class', 'button')
 							]),
 						_List_fromArray(
