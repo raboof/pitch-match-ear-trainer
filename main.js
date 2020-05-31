@@ -6412,6 +6412,7 @@ var $author$project$Main$Start = function (a) {
 };
 var $author$project$Main$ToggleMute = {$: 'ToggleMute'};
 var $author$project$Main$Try = {$: 'Try'};
+var $elm$html$Html$a = _VirtualDom_node('a');
 var $elm$virtual_dom$VirtualDom$attribute = F2(
 	function (key, value) {
 		return A2(
@@ -6421,6 +6422,7 @@ var $elm$virtual_dom$VirtualDom$attribute = F2(
 	});
 var $elm$html$Html$Attributes$attribute = $elm$virtual_dom$VirtualDom$attribute;
 var $elm$html$Html$div = _VirtualDom_node('div');
+var $elm$html$Html$li = _VirtualDom_node('li');
 var $elm$virtual_dom$VirtualDom$Normal = function (a) {
 	return {$: 'Normal', a: a};
 };
@@ -6440,6 +6442,7 @@ var $elm$html$Html$Events$onClick = function (msg) {
 };
 var $elm$virtual_dom$VirtualDom$text = _VirtualDom_text;
 var $elm$html$Html$text = $elm$virtual_dom$VirtualDom$text;
+var $elm$html$Html$ul = _VirtualDom_node('ul');
 var $author$project$Main$view = function (model) {
 	var _v0 = model.page;
 	switch (_v0.$) {
@@ -6612,6 +6615,18 @@ var $author$project$Main$view = function (model) {
 						$elm$html$Html$div,
 						_List_fromArray(
 							[
+								$elm$html$Html$Events$onClick(
+								$author$project$Main$Open($author$project$Main$Settings)),
+								A2($elm$html$Html$Attributes$attribute, 'class', 'settings')
+							]),
+						_List_fromArray(
+							[
+								$elm$html$Html$text('⚙️')
+							])),
+						A2(
+						$elm$html$Html$div,
+						_List_fromArray(
+							[
 								A2($elm$html$Html$Attributes$attribute, 'class', 'text')
 							]),
 						_List_fromArray(
@@ -6655,6 +6670,81 @@ var $author$project$Main$view = function (model) {
 				_List_Nil,
 				_List_fromArray(
 					[
+						A2(
+						$elm$html$Html$div,
+						_List_fromArray(
+							[
+								A2($elm$html$Html$Attributes$attribute, 'class', 'details')
+							]),
+						_List_fromArray(
+							[
+								$elm$html$Html$text('This game is open source: participate in its development at '),
+								A2(
+								$elm$html$Html$a,
+								_List_fromArray(
+									[
+										A2($elm$html$Html$Attributes$attribute, 'href', 'https://github.com/raboof/pitch-match-ear-trainer')
+									]),
+								_List_fromArray(
+									[
+										$elm$html$Html$text('here')
+									])),
+								$elm$html$Html$text('. Thanks to:'),
+								A2(
+								$elm$html$Html$ul,
+								_List_Nil,
+								_List_fromArray(
+									[
+										A2(
+										$elm$html$Html$li,
+										_List_Nil,
+										_List_fromArray(
+											[
+												A2(
+												$elm$html$Html$a,
+												_List_fromArray(
+													[
+														A2($elm$html$Html$Attributes$attribute, 'href', 'https://elm-lang.org/')
+													]),
+												_List_fromArray(
+													[
+														$elm$html$Html$text('elm')
+													]))
+											])),
+										A2(
+										$elm$html$Html$li,
+										_List_Nil,
+										_List_fromArray(
+											[
+												A2(
+												$elm$html$Html$a,
+												_List_fromArray(
+													[
+														A2($elm$html$Html$Attributes$attribute, 'href', 'https://tonejs.github.io/')
+													]),
+												_List_fromArray(
+													[
+														$elm$html$Html$text('Tone.js')
+													]))
+											])),
+										A2(
+										$elm$html$Html$li,
+										_List_Nil,
+										_List_fromArray(
+											[
+												A2(
+												$elm$html$Html$a,
+												_List_fromArray(
+													[
+														A2($elm$html$Html$Attributes$attribute, 'href', 'https://freesound.org/people/MattLeschuck/sounds/511484/')
+													]),
+												_List_fromArray(
+													[
+														$elm$html$Html$text('Matt Leschuck')
+													]))
+											]))
+									]))
+							])),
 						A2(
 						$elm$html$Html$div,
 						_List_fromArray(
