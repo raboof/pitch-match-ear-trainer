@@ -6219,9 +6219,17 @@ var $author$project$Main$Down = function (a) {
 	return {$: 'Down', a: a};
 };
 var $author$project$Main$Settings = {$: 'Settings'};
+var $elm$core$Basics$pow = _Basics_pow;
 var $author$project$Main$yToFrequency = F2(
-	function (windowHeight, y) {
-		return $elm$core$Basics$round($author$project$Main$maxPitch - ((($author$project$Main$maxPitch - $author$project$Main$minPitch) * y) / windowHeight));
+	function (intWindowHeight, intY) {
+		var windowHeight = intWindowHeight;
+		var y = windowHeight - intY;
+		var min = $author$project$Main$minPitch;
+		var max = $author$project$Main$maxPitch;
+		var b = A2($elm$core$Basics$pow, max / min, 1.0 / windowHeight);
+		var a = min;
+		return $elm$core$Basics$round(
+			a * A2($elm$core$Basics$pow, b, y));
 	});
 var $author$project$Main$setY = F2(
 	function (model, y) {
