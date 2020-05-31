@@ -2,7 +2,7 @@ port module Main exposing (..)
 
 import Browser
 import Browser.Events
-import Html exposing (Html, button, div, text)
+import Html exposing (Html, a, button, div, li, text, ul)
 import Html.Attributes exposing (attribute)
 import Html.Events exposing (on, onClick)
 import Json.Decode as Decode exposing (..)
@@ -406,7 +406,8 @@ view model =
 
         Found ->
             div []
-                [ div [ attribute "class" "text" ] [ text "Nice! You got it!" ]
+                [ div [ onClick (Open Settings), attribute "class" "settings" ] [ text "⚙️" ]
+                , div [ attribute "class" "text" ] [ text "Nice! You got it!" ]
                 , div [ onClick (Start False), attribute "class" "button" ] [ text "Play another" ]
                 ]
 
@@ -416,7 +417,17 @@ view model =
 
         Settings ->
             div []
-                [ div [ onClick (Start False), attribute "class" "button" ] [ text "Play 'Match Pitch'" ]
+                [ div [ attribute "class" "details" ]
+                    [ text "This game is open source: participate in its development at "
+                    , a [ attribute "href" "https://github.com/raboof/pitch-match-ear-trainer" ] [ text "here" ]
+                    , text ". Thanks to:"
+                    , ul []
+                        [ li [] [ a [ attribute "href" "https://elm-lang.org/" ] [ text "elm" ] ]
+                        , li [] [ a [ attribute "href" "https://tonejs.github.io/" ] [ text "Tone.js" ] ]
+                        , li [] [ a [ attribute "href" "https://freesound.org/people/MattLeschuck/sounds/511484/" ] [ text "Matt Leschuck" ] ]
+                        ]
+                    ]
+                , div [ onClick (Start False), attribute "class" "button" ] [ text "Play 'Match Pitch'" ]
                 ]
 
 
