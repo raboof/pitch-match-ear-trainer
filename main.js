@@ -6678,7 +6678,7 @@ var $author$project$Main$view = function (model) {
 							]),
 						_List_fromArray(
 							[
-								$elm$html$Html$text('This game is open source: participate in its development at '),
+								$elm$html$Html$text('This game is open source: participate '),
 								A2(
 								$elm$html$Html$a,
 								_List_fromArray(
