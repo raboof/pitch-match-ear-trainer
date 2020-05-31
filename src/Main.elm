@@ -41,6 +41,7 @@ type Page
     | Finding Frequency OkFor PointState WithHints
     | Found
     | ErrorPage String
+    | Settings
 
 
 type alias Model =
@@ -60,6 +61,7 @@ type Msg
     | Error String
     | Tick
     | ToggleMute
+    | Open Page
 
 
 main =
@@ -138,6 +140,9 @@ setY model y =
         ErrorPage e ->
             ErrorPage e
 
+        Settings ->
+            Settings
+
 
 up model =
     case model of
@@ -158,6 +163,9 @@ up model =
 
         ErrorPage e ->
             ErrorPage e
+
+        Settings ->
+            Settings
 
 
 init windowHeight =
@@ -220,6 +228,9 @@ sounds model =
             ErrorPage e ->
                 silent
 
+            Settings ->
+                silent
+
 
 tick page =
     case page of
@@ -269,6 +280,9 @@ updateModel model msg =
 
         ToggleMute ->
             { model | muted = not model.muted }
+
+        Open page ->
+            { model | page = page }
 
 
 effect : Msg -> Cmd Msg
@@ -345,15 +359,17 @@ view model =
         Finding target okFor pointState withHints ->
             div
                 []
-                [ -- text "target "
-                  --, text (String.fromInt target)
-                  --, text "pointed "
-                  --, text (String.fromInt pointed)
-                  --, text "diff "
-                  --, text (String.fromInt (abs (target - pointed)))
-                  --, text " ok for: "
-                  --, text (String.fromInt okFor)
-                  div [ attribute "class" "text" ] [ text "Try to match the 2 pitches" ]
+                [ div [ onClick (Open Settings), attribute "class" "settings" ] [ text "⚙️" ]
+
+                -- text "target "
+                --, text (String.fromInt target)
+                --, text "pointed "
+                --, text (String.fromInt pointed)
+                --, text "diff "
+                --, text (String.fromInt (abs (target - pointed)))
+                --, text " ok for: "
+                --, text (String.fromInt okFor)
+                , div [ attribute "class" "text" ] [ text "Try to match the 2 pitches" ]
 
                 --, if matches target pointed
                 --  then div [] [ text "Match!" ]
@@ -397,6 +413,11 @@ view model =
         ErrorPage e ->
             div []
                 [ div [ attribute "class" "text" ] [ text e ] ]
+
+        Settings ->
+            div []
+                [ div [ onClick (Start False), attribute "class" "button" ] [ text "Play 'Match Pitch'" ]
+                ]
 
 
 getTouchY obj =
