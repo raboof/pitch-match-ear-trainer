@@ -6175,8 +6175,10 @@ var $author$project$Main$sounds = function (model) {
 				}
 			case 'Found':
 				return $author$project$Main$silent;
-			default:
+			case 'ErrorPage':
 				var e = _v0.a;
+				return $author$project$Main$silent;
+			default:
 				return $author$project$Main$silent;
 		}
 	}
@@ -6216,6 +6218,7 @@ var $elm$core$Basics$not = _Basics_not;
 var $author$project$Main$Down = function (a) {
 	return {$: 'Down', a: a};
 };
+var $author$project$Main$Settings = {$: 'Settings'};
 var $author$project$Main$yToFrequency = F2(
 	function (windowHeight, y) {
 		return $elm$core$Basics$round($author$project$Main$maxPitch - ((($author$project$Main$maxPitch - $author$project$Main$minPitch) * y) / windowHeight));
@@ -6248,9 +6251,11 @@ var $author$project$Main$setY = F2(
 					withHints);
 			case 'Found':
 				return $author$project$Main$Found;
-			default:
+			case 'ErrorPage':
 				var e = _v0.a;
 				return $author$project$Main$ErrorPage(e);
+			default:
+				return $author$project$Main$Settings;
 		}
 	});
 var $elm$core$Basics$abs = function (n) {
@@ -6316,9 +6321,11 @@ var $author$project$Main$up = function (model) {
 			return A4($author$project$Main$Finding, t, 0, $author$project$Main$Up, withHints);
 		case 'Found':
 			return $author$project$Main$Found;
-		default:
+		case 'ErrorPage':
 			var e = model.a;
 			return $author$project$Main$ErrorPage(e);
+		default:
+			return $author$project$Main$Settings;
 	}
 };
 var $author$project$Main$updateModel = F2(
@@ -6371,10 +6378,15 @@ var $author$project$Main$updateModel = F2(
 					{
 						page: $author$project$Main$tick(model.page)
 					});
-			default:
+			case 'ToggleMute':
 				return _Utils_update(
 					model,
 					{muted: !model.muted});
+			default:
+				var page = msg.a;
+				return _Utils_update(
+					model,
+					{page: page});
 		}
 	});
 var $author$project$Main$update = F2(
@@ -6392,6 +6404,9 @@ var $author$project$Main$update = F2(
 					])));
 	});
 var $author$project$Main$Calibrate = {$: 'Calibrate'};
+var $author$project$Main$Open = function (a) {
+	return {$: 'Open', a: a};
+};
 var $author$project$Main$Start = function (a) {
 	return {$: 'Start', a: a};
 };
@@ -6539,6 +6554,18 @@ var $author$project$Main$view = function (model) {
 						$elm$html$Html$div,
 						_List_fromArray(
 							[
+								$elm$html$Html$Events$onClick(
+								$author$project$Main$Open($author$project$Main$Settings)),
+								A2($elm$html$Html$Attributes$attribute, 'class', 'settings')
+							]),
+						_List_fromArray(
+							[
+								$elm$html$Html$text('⚙️')
+							])),
+						A2(
+						$elm$html$Html$div,
+						_List_fromArray(
+							[
 								A2($elm$html$Html$Attributes$attribute, 'class', 'text')
 							]),
 						_List_fromArray(
@@ -6604,7 +6631,7 @@ var $author$project$Main$view = function (model) {
 								$elm$html$Html$text('Play another')
 							]))
 					]));
-		default:
+		case 'ErrorPage':
 			var e = _v0.a;
 			return A2(
 				$elm$html$Html$div,
@@ -6620,6 +6647,25 @@ var $author$project$Main$view = function (model) {
 						_List_fromArray(
 							[
 								$elm$html$Html$text(e)
+							]))
+					]));
+		default:
+			return A2(
+				$elm$html$Html$div,
+				_List_Nil,
+				_List_fromArray(
+					[
+						A2(
+						$elm$html$Html$div,
+						_List_fromArray(
+							[
+								$elm$html$Html$Events$onClick(
+								$author$project$Main$Start(false)),
+								A2($elm$html$Html$Attributes$attribute, 'class', 'button')
+							]),
+						_List_fromArray(
+							[
+								$elm$html$Html$text('Play \'Match Pitch\'')
 							]))
 					]));
 	}
