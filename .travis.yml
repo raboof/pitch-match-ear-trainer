@@ -8,5 +8,6 @@ deploy:
   keep_history: true
   local_dir: target
   github_token: $GITHUB_TOKEN
+  fqdn: pitch.bzzt.net
   on:
     branch: master
