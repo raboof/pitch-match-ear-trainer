@@ -6,6 +6,10 @@
   <script src="js/Tone.js"></script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=0" />
 <style>
+html {
+  position: fixed;
+}
+
 body {
   font-family: proxima-soft, sans-serif;
   /* https://stackoverflow.com/questions/29008194/disabling-androids-chrome-pull-down-to-refresh-feature */
@@ -144,7 +148,11 @@ app.ports.setSounds.subscribe(function(sounds) {
 });
 document.onmouseout = app.ports.onMouseOut;
 document.onmouseenter = app.ports.onMouseEnter;
-document.addEventListener("touchmove", app.ports.onTouchMove.send, false);
+// https://stackoverflow.com/a/49853392
+document.addEventListener("touchmove", function(e) {
+  e.preventDefault();
+  app.ports.onTouchMove.send(e);
+}, false);
 document.addEventListener("touchstart", app.ports.onTouchStart.send, false);
 document.addEventListener("touchcancel", app.ports.onTouchCancel.send, false);
 document.addEventListener("touchend", app.ports.onTouchEnd.send, false);
