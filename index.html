@@ -122,7 +122,10 @@ success.toMaster();
 
 var app = Elm.Main.init({
   node: document.getElementById('myapp'),
-  flags: window.innerHeight
+  flags: {
+    windowHeight: window.innerHeight,
+    debug: window.location.search.includes('debug')
+  }
 });
 app.ports.success.subscribe(function() {
   success.start();

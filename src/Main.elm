@@ -46,6 +46,8 @@ type Page
 
 type alias Model =
     { windowHeight : Int
+    , debug : Bool
+    , y : Int
     , muted : Bool
     , page : Page
     }
@@ -68,7 +70,7 @@ main =
     Browser.element
         { init = init
         , update = update
-        , view = view
+        , view = debugView
         , subscriptions = subscriptions
         }
 
@@ -187,8 +189,11 @@ up model =
             Settings
 
 
-init windowHeight =
-    ( { windowHeight = windowHeight
+init: { windowHeight: Int, debug: Bool } -> (Model, Cmd Msg)
+init flags  =
+    ( { windowHeight = flags.windowHeight
+      , debug = flags.debug
+      , y = 0
       , muted = False
       , page = Init
       }
@@ -286,7 +291,7 @@ updateModel model msg =
             { model | page = Finding target 0 Up withHints }
 
         MouseMoved y ->
-            { model | page = setY model y }
+            { model | page = setY model y, y = y }
 
         MouseUp ->
             { model | page = up model.page }
@@ -335,6 +340,10 @@ update msg model =
     in
     ( updated, Cmd.batch [ effect msg, transition model.page updated.page, setSounds (sounds updated) ] )
 
+debugView model =
+  if model.debug
+  then div [] [ text (String.fromInt model.y), view model ]
+  else view model
 
 view model =
     case model.page of
