@@ -5673,7 +5673,7 @@ var $author$project$Main$getTouchY = function (obj) {
 			A2(
 				$elm$json$Json$Decode$field,
 				'0',
-				A2($elm$json$Json$Decode$field, 'pageY', $elm$json$Json$Decode$float))),
+				A2($elm$json$Json$Decode$field, 'clientY', $elm$json$Json$Decode$float))),
 		obj);
 	if (_v0.$ === 'Ok') {
 		var y = _v0.a;
@@ -5690,11 +5690,11 @@ var $author$project$Main$onMouseEnter = _Platform_incomingPort(
 	'onMouseEnter',
 	A2(
 		$elm$json$Json$Decode$andThen,
-		function (pageY) {
+		function (clientY) {
 			return $elm$json$Json$Decode$succeed(
-				{pageY: pageY});
+				{clientY: clientY});
 		},
-		A2($elm$json$Json$Decode$field, 'pageY', $elm$json$Json$Decode$int)));
+		A2($elm$json$Json$Decode$field, 'clientY', $elm$json$Json$Decode$int)));
 var $elm$browser$Browser$Events$Document = {$: 'Document'};
 var $elm$browser$Browser$Events$MySub = F3(
 	function (a, b, c) {
@@ -5920,10 +5920,10 @@ var $author$project$Main$subscriptions = function (_v0) {
 				A2(
 					$elm$json$Json$Decode$map,
 					$author$project$Main$MouseMoved,
-					A2($elm$json$Json$Decode$field, 'pageY', $elm$json$Json$Decode$int))),
+					A2($elm$json$Json$Decode$field, 'clientY', $elm$json$Json$Decode$int))),
 				$author$project$Main$onMouseEnter(
 				function (o) {
-					return $author$project$Main$MouseMoved(o.pageY);
+					return $author$project$Main$MouseMoved(o.clientY);
 				}),
 				$author$project$Main$onTouchStart($author$project$Main$getTouchY),
 				$author$project$Main$onTouchMove($author$project$Main$getTouchY),
