@@ -189,8 +189,8 @@ up model =
             Settings
 
 
-init: { windowHeight: Int, debug: Bool } -> (Model, Cmd Msg)
-init flags  =
+init : { windowHeight : Int, debug : Bool } -> ( Model, Cmd Msg )
+init flags =
     ( { windowHeight = flags.windowHeight
       , debug = flags.debug
       , y = 0
@@ -340,10 +340,14 @@ update msg model =
     in
     ( updated, Cmd.batch [ effect msg, transition model.page updated.page, setSounds (sounds updated) ] )
 
+
 debugView model =
-  if model.debug
-  then div [] [ text (String.fromInt model.y), view model ]
-  else view model
+    if model.debug then
+        div [] [ text (String.fromInt model.y), view model ]
+
+    else
+        view model
+
 
 view model =
     case model.page of
