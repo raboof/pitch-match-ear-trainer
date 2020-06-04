@@ -79,7 +79,7 @@ port setSounds : Encode.Value -> Cmd msg
 port success : () -> Cmd msg
 
 
-port onMouseEnter : ({ pageY : Int } -> msg) -> Sub msg
+port onMouseEnter : ({ clientY : Int } -> msg) -> Sub msg
 
 
 port onMouseOut : ({} -> msg) -> Sub msg
@@ -451,7 +451,7 @@ view model =
 
 
 getTouchY obj =
-    case Decode.decodeValue (field "touches" (field "0" (field "pageY" float))) obj of
+    case Decode.decodeValue (field "touches" (field "0" (field "clientY" float))) obj of
         Ok y ->
             MouseMoved (round y)
 
@@ -461,8 +461,8 @@ getTouchY obj =
 
 subscriptions _ =
     Sub.batch
-        [ Browser.Events.onMouseMove (map MouseMoved (field "pageY" int))
-        , onMouseEnter (\o -> MouseMoved o.pageY)
+        [ Browser.Events.onMouseMove (map MouseMoved (field "clientY" int))
+        , onMouseEnter (\o -> MouseMoved o.clientY)
         , onTouchStart getTouchY
         , onTouchMove getTouchY
         , onTouchEnd (\_ -> MouseUp)
