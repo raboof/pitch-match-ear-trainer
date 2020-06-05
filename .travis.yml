@@ -1,6 +1,6 @@
 language: elm
 
-script: elm-format --validate . && elm-test && mkdir target && elm make src/Main.elm --output=target/main.js && cp index.html target && cp -r assets target && cp -r js target
+script: elm-format --validate . && elm-test && make dist
 
 deploy:
   provider: pages
