@@ -143,14 +143,27 @@ app.ports.setSounds.subscribe(function(sounds) {
     oscillators[0].frequency.value = sounds[0].frequency
   }
 
-  if (sounds[1].gain == 0 && oscillators[1].state == "started") {
+  if ((!sounds[1] || sounds[1].gain == 0) && oscillators[1].state == "started") {
     console.log("stopping");
     oscillators[1].stop();
-  } else if (sounds[1].gain > 0 && oscillators[1].state == "stopped") {
+  } else if (sounds[1] && sounds[1].gain > 0 && oscillators[1].state == "stopped") {
     console.log("starting");
     oscillators[1].start();
   }
-  oscillators[1].frequency.value = sounds[1].frequency
+  if (sounds[1]) {
+    oscillators[1].frequency.value = sounds[1].frequency
+  }
+
+  if ((!sounds[2] || sounds[2].gain == 0) && oscillators[2].state == "started") {
+    console.log("stopping");
+    oscillators[2].stop();
+  } else if (sounds[2] && sounds[2].gain > 0 && oscillators[2].state == "stopped") {
+    console.log("starting");
+    oscillators[2].start();
+  }
+  if (sounds[2]) {
+    oscillators[2].frequency.value = sounds[2].frequency
+  }
 });
 document.onmouseout = app.ports.onMouseOut;
 document.onmouseenter = app.ports.onMouseEnter;

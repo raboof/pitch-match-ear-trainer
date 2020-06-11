@@ -12,6 +12,8 @@ import Maybe exposing (withDefault)
 import Random
 import Time
 
+type alias Gain =
+    Float
 
 type alias Frequency =
     Int
@@ -63,14 +65,11 @@ instruction challenge =
             text
 
 
-reference : Challenge -> Frequency
+reference : Challenge -> List (Gain, Frequency)
 reference challenge =
     case challenge of
-        Challenge ( _, [ r ], _ ) _ ->
-            r
-
-        _ ->
-            42
+        Challenge ( _, rs, _ ) _ ->
+            List.map (\r -> (0.4, r)) rs
 
 
 type Page
@@ -271,10 +270,10 @@ sounds model =
                 silent
 
             Finding challenge _ Up _ ->
-                encodeSounds [ (0.4, (reference challenge)), (0, 0) ]
+                encodeSounds (reference challenge)
 
             Finding challenge _ (Down pointedFreq) _ ->
-                encodeSounds [ (0.4, (reference challenge)), (0.4, pointedFreq) ]
+                encodeSounds ((reference challenge) ++ [ (0.4, pointedFreq) ])
 
             Found ->
                 silent
