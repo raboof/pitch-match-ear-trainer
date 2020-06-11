@@ -4952,7 +4952,59 @@ var $elm$virtual_dom$VirtualDom$attribute = F2(
 			_VirtualDom_noJavaScriptOrHtmlUri(value));
 	});
 var $elm$html$Html$Attributes$attribute = $elm$virtual_dom$VirtualDom$attribute;
+var $author$project$Main$instruction = function (challenge) {
+	var _v1 = challenge.a;
+	var text = _v1.c;
+	return text;
+};
 var $elm$html$Html$li = _VirtualDom_node('li');
+var $author$project$Main$Challenge = F2(
+	function (a, b) {
+		return {$: 'Challenge', a: a, b: b};
+	});
+var $author$project$Main$NewChallenge = F2(
+	function (a, b) {
+		return {$: 'NewChallenge', a: a, b: b};
+	});
+var $author$project$Main$newChordChallenge = function (frequency) {
+	return A2(
+		$author$project$Main$NewChallenge,
+		false,
+		A2(
+			$author$project$Main$Challenge,
+			_Utils_Tuple3(
+				frequency,
+				_List_fromArray(
+					[frequency]),
+				'First match the base frequency'),
+			_List_fromArray(
+				[
+					_Utils_Tuple3(
+					((frequency * 3) / 2) | 0,
+					_List_fromArray(
+						[frequency]),
+					'Now find the perfect fifth'),
+					_Utils_Tuple3(
+					((frequency * 81) / 64) | 0,
+					_List_fromArray(
+						[frequency, ((frequency * 3) / 2) | 0]),
+					'And now the major third')
+				])));
+};
+var $author$project$Main$newSingleChallenge = F2(
+	function (withHints, frequency) {
+		return A2(
+			$author$project$Main$NewChallenge,
+			withHints,
+			A2(
+				$author$project$Main$Challenge,
+				_Utils_Tuple3(
+					frequency,
+					_List_fromArray(
+						[frequency]),
+					'Try to match the 2 pitches'),
+				_List_Nil));
+	});
 var $elm$virtual_dom$VirtualDom$Normal = function (a) {
 	return {$: 'Normal', a: a};
 };
@@ -4969,6 +5021,11 @@ var $elm$html$Html$Events$onClick = function (msg) {
 		$elm$html$Html$Events$on,
 		'click',
 		$elm$json$Json$Decode$succeed(msg));
+};
+var $author$project$Main$target = function (challenge) {
+	var _v1 = challenge.a;
+	var t = _v1.a;
+	return t;
 };
 var $elm$html$Html$ul = _VirtualDom_node('ul');
 var $author$project$Main$view = function (model) {
@@ -5052,7 +5109,8 @@ var $author$project$Main$view = function (model) {
 						_List_fromArray(
 							[
 								(goingFor > 3) ? $elm$html$Html$Events$onClick(
-								$author$project$Main$Start(true)) : A2($elm$html$Html$Attributes$attribute, 'class', 'disabled'),
+								$author$project$Main$Start(
+									$author$project$Main$newSingleChallenge(true))) : A2($elm$html$Html$Attributes$attribute, 'class', 'disabled'),
 								A2($elm$html$Html$Attributes$attribute, 'class', 'button')
 							]),
 						_List_fromArray(
@@ -5072,7 +5130,7 @@ var $author$project$Main$view = function (model) {
 							]))
 					]));
 		case 'Finding':
-			var target = _v0.a;
+			var challenge = _v0.a;
 			var okFor = _v0.b;
 			var pointState = _v0.c;
 			var withHints = _v0.d;
@@ -5101,7 +5159,8 @@ var $author$project$Main$view = function (model) {
 							]),
 						_List_fromArray(
 							[
-								$elm$html$Html$text('Try to match the 2 pitches')
+								$elm$html$Html$text(
+								$author$project$Main$instruction(challenge))
 							])),
 						withHints ? A2(
 						$elm$html$Html$div,
@@ -5116,7 +5175,9 @@ var $author$project$Main$view = function (model) {
 									return $elm$html$Html$text('touch the screen...');
 								} else {
 									var current = pointState.a;
-									return (okFor > 0) ? $elm$html$Html$text('hold it...') : ((_Utils_cmp(current, target) < 0) ? $elm$html$Html$text('you\'re flat, move up') : $elm$html$Html$text('you\'re sharp, move down'));
+									return (okFor > 0) ? $elm$html$Html$text('hold it...') : ((_Utils_cmp(
+										current,
+										$author$project$Main$target(challenge)) < 0) ? $elm$html$Html$text('you\'re flat, move up') : $elm$html$Html$text('you\'re sharp, move down'));
 								}
 							}()
 							])) : A2($elm$html$Html$div, _List_Nil, _List_Nil),
@@ -5166,7 +5227,8 @@ var $author$project$Main$view = function (model) {
 						_List_fromArray(
 							[
 								$elm$html$Html$Events$onClick(
-								$author$project$Main$Start(false)),
+								$author$project$Main$Start(
+									$author$project$Main$newSingleChallenge(false))),
 								A2($elm$html$Html$Attributes$attribute, 'class', 'button')
 							]),
 						_List_fromArray(
@@ -5278,12 +5340,25 @@ var $author$project$Main$view = function (model) {
 						_List_fromArray(
 							[
 								$elm$html$Html$Events$onClick(
-								$author$project$Main$Start(false)),
+								$author$project$Main$Start(
+									$author$project$Main$newSingleChallenge(false))),
 								A2($elm$html$Html$Attributes$attribute, 'class', 'button')
 							]),
 						_List_fromArray(
 							[
 								$elm$html$Html$text('Play \'Match Pitch\'')
+							])),
+						A2(
+						$elm$html$Html$div,
+						_List_fromArray(
+							[
+								$elm$html$Html$Events$onClick(
+								$author$project$Main$Start($author$project$Main$newChordChallenge)),
+								A2($elm$html$Html$Attributes$attribute, 'class', 'button')
+							]),
+						_List_fromArray(
+							[
+								$elm$html$Html$text('Play \'Find Chord\'')
 							]))
 					]));
 	}
@@ -6317,10 +6392,6 @@ var $author$project$Main$subscriptions = function (_v0) {
 				})
 			]));
 };
-var $author$project$Main$NewChallenge = F2(
-	function (a, b) {
-		return {$: 'NewChallenge', a: a, b: b};
-	});
 var $elm$random$Random$Generate = function (a) {
 	return {$: 'Generate', a: a};
 };
@@ -6458,10 +6529,10 @@ var $author$project$Main$maxPitch = 1000;
 var $author$project$Main$minPitch = 300;
 var $author$project$Main$effect = function (msg) {
 	if (msg.$ === 'Start') {
-		var withHints = msg.a;
+		var challengeGenerator = msg.a;
 		return A2(
 			$elm$random$Random$generate,
-			$author$project$Main$NewChallenge(withHints),
+			challengeGenerator,
 			A2($elm$random$Random$int, $author$project$Main$minPitch + 10, $author$project$Main$maxPitch - 10));
 	} else {
 		return $elm$core$Platform$Cmd$none;
@@ -6514,6 +6585,16 @@ var $author$project$Main$encodeSounds = F4(
 							])))
 				]));
 	});
+var $author$project$Main$reference = function (challenge) {
+	if (challenge.a.b.b && (!challenge.a.b.b.b)) {
+		var _v1 = challenge.a;
+		var _v2 = _v1.b;
+		var r = _v2.a;
+		return r;
+	} else {
+		return 42;
+	}
+};
 var $author$project$Main$silent = A4($author$project$Main$encodeSounds, 0, 0, 0, 0);
 var $author$project$Main$sounds = function (model) {
 	if (model.muted) {
@@ -6535,13 +6616,23 @@ var $author$project$Main$sounds = function (model) {
 				}
 			case 'Finding':
 				if (_v0.c.$ === 'Up') {
-					var targetFreq = _v0.a;
+					var challenge = _v0.a;
 					var _v2 = _v0.c;
-					return A4($author$project$Main$encodeSounds, 0.4, targetFreq, 0, 0);
+					return A4(
+						$author$project$Main$encodeSounds,
+						0.4,
+						$author$project$Main$reference(challenge),
+						0,
+						0);
 				} else {
-					var targetFreq = _v0.a;
+					var challenge = _v0.a;
 					var pointedFreq = _v0.c.a;
-					return A4($author$project$Main$encodeSounds, 0.4, targetFreq, 0.4, pointedFreq);
+					return A4(
+						$author$project$Main$encodeSounds,
+						0.4,
+						$author$project$Main$reference(challenge),
+						0.4,
+						pointedFreq);
 				}
 			case 'Found':
 				return $author$project$Main$silent;
@@ -6564,12 +6655,31 @@ var $author$project$Main$success = _Platform_outgoingPort(
 var $author$project$Main$transition = F2(
 	function (from, to) {
 		var _v0 = _Utils_Tuple2(from, to);
-		if (_v0.b.$ === 'Found') {
-			var _v1 = _v0.b;
-			return (!_Utils_eq(from, $author$project$Main$Found)) ? $author$project$Main$success(_Utils_Tuple0) : $elm$core$Platform$Cmd$none;
-		} else {
-			return $elm$core$Platform$Cmd$none;
+		_v0$2:
+		while (true) {
+			switch (_v0.b.$) {
+				case 'Found':
+					var _v1 = _v0.b;
+					return (!_Utils_eq(from, $author$project$Main$Found)) ? $author$project$Main$success(_Utils_Tuple0) : $elm$core$Platform$Cmd$none;
+				case 'Finding':
+					if (_v0.a.$ === 'Finding') {
+						var _v2 = _v0.a;
+						var _v3 = _v2.a;
+						var rest_before = _v3.b;
+						var _v4 = _v0.b;
+						var _v5 = _v4.a;
+						var rest_after = _v5.b;
+						return (!_Utils_eq(
+							$elm$core$List$length(rest_before),
+							$elm$core$List$length(rest_after))) ? $author$project$Main$success(_Utils_Tuple0) : $elm$core$Platform$Cmd$none;
+					} else {
+						break _v0$2;
+					}
+				default:
+					break _v0$2;
+			}
 		}
+		return $elm$core$Platform$Cmd$none;
 	});
 var $author$project$Main$Calibrating = {$: 'Calibrating'};
 var $author$project$Main$ErrorPage = function (a) {
@@ -6616,13 +6726,13 @@ var $author$project$Main$setY = F2(
 					$author$project$Main$Down(
 						A2($author$project$Main$yToFrequency, model.windowHeight, y)));
 			case 'Finding':
-				var target = _v0.a;
+				var challenge = _v0.a;
 				var okFor = _v0.b;
 				var withHints = _v0.d;
 				var current = A2($author$project$Main$yToFrequency, model.windowHeight, y);
 				return A4(
 					$author$project$Main$Finding,
-					target,
+					challenge,
 					okFor,
 					$author$project$Main$Down(current),
 					withHints);
@@ -6639,8 +6749,8 @@ var $elm$core$Basics$abs = function (n) {
 	return (n < 0) ? (-n) : n;
 };
 var $author$project$Main$matches = F2(
-	function (target, current) {
-		return $elm$core$Basics$abs(target - current) < 7;
+	function (t, current) {
+		return $elm$core$Basics$abs(t - current) < 7;
 	});
 var $author$project$Main$tick = function (page) {
 	_v0$2:
@@ -6659,21 +6769,44 @@ var $author$project$Main$tick = function (page) {
 				}
 			case 'Finding':
 				if (page.c.$ === 'Down') {
-					var target = page.a;
+					var challenge = page.a;
 					var okFor = page.b;
 					var current = page.c.a;
 					var withHints = page.d;
-					return (okFor > 7) ? $author$project$Main$Found : (A2($author$project$Main$matches, target, current) ? A4(
-						$author$project$Main$Finding,
-						target,
-						okFor + 1,
-						$author$project$Main$Down(current),
-						withHints) : A4(
-						$author$project$Main$Finding,
-						target,
-						0,
-						$author$project$Main$Down(current),
-						withHints));
+					if (okFor > 7) {
+						if (!challenge.b.b) {
+							return $author$project$Main$Found;
+						} else {
+							var _v2 = challenge.b;
+							var next = _v2.a;
+							var rest = _v2.b;
+							return A4(
+								$author$project$Main$Finding,
+								A2($author$project$Main$Challenge, next, rest),
+								0,
+								$author$project$Main$Up,
+								withHints);
+						}
+					} else {
+						if (A2(
+							$author$project$Main$matches,
+							$author$project$Main$target(challenge),
+							current)) {
+							return A4(
+								$author$project$Main$Finding,
+								challenge,
+								okFor + 1,
+								$author$project$Main$Down(current),
+								withHints);
+						} else {
+							return A4(
+								$author$project$Main$Finding,
+								challenge,
+								0,
+								$author$project$Main$Down(current),
+								withHints);
+						}
+					}
 				} else {
 					break _v0$2;
 				}
@@ -6723,11 +6856,11 @@ var $author$project$Main$updateModel = F2(
 				return model;
 			case 'NewChallenge':
 				var withHints = msg.a;
-				var target = msg.b;
+				var challenge = msg.b;
 				return _Utils_update(
 					model,
 					{
-						page: A4($author$project$Main$Finding, target, 0, $author$project$Main$Up, withHints)
+						page: A4($author$project$Main$Finding, challenge, 0, $author$project$Main$Up, withHints)
 					});
 			case 'MouseMoved':
 				var y = msg.a;
