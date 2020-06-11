@@ -34,11 +34,40 @@ type alias WithHints =
     Bool
 
 
+type alias Target =
+    Frequency
+
+
+type alias Reference =
+    Frequency
+
+
+type Challenge
+    = Challenge ( Target, List Reference ) (List ( Target, List Reference ))
+
+
+target : Challenge -> Frequency
+target challenge =
+    case challenge of
+        Challenge ( t, _ ) _ ->
+            t
+
+
+reference : Challenge -> Frequency
+reference challenge =
+    case challenge of
+        Challenge ( _, [ r ] ) _ ->
+            r
+
+        _ ->
+            42
+
+
 type Page
     = Init
     | Calibrating
     | Trying GoingFor PointState
-    | Finding Frequency OkFor PointState WithHints
+    | Finding Challenge OkFor PointState WithHints
     | Found
     | ErrorPage String
     | Settings
@@ -57,7 +86,7 @@ type Msg
     = Calibrate
     | Try
     | Start WithHints
-    | NewChallenge WithHints Frequency
+    | NewChallenge WithHints Challenge
     | MouseMoved Int
     | MouseUp
     | Error String
@@ -131,9 +160,9 @@ yToFrequency intWindowHeight intY =
     round (a * (b ^ y))
 
 
-matches : Frequency -> Frequency -> Bool
-matches target current =
-    abs (target - current) < 7
+matches : Target -> Frequency -> Bool
+matches t current =
+    abs (t - current) < 7
 
 
 setY : Model -> Int -> Page
@@ -148,12 +177,12 @@ setY model y =
         Trying goingFor _ ->
             Trying goingFor (Down (yToFrequency model.windowHeight y))
 
-        Finding target okFor _ withHints ->
+        Finding challenge okFor _ withHints ->
             let
                 current =
                     yToFrequency model.windowHeight y
             in
-            Finding target okFor (Down current) withHints
+            Finding challenge okFor (Down current) withHints
 
         Found ->
             Found
@@ -240,11 +269,11 @@ sounds model =
             Trying _ Up ->
                 silent
 
-            Finding targetFreq _ Up _ ->
-                encodeSounds 0.4 targetFreq 0 0
+            Finding challenge _ Up _ ->
+                encodeSounds 0.4 (reference challenge) 0 0
 
-            Finding targetFreq _ (Down pointedFreq) _ ->
-                encodeSounds 0.4 targetFreq 0.4 pointedFreq
+            Finding challenge _ (Down pointedFreq) _ ->
+                encodeSounds 0.4 (reference challenge) 0.4 pointedFreq
 
             Found ->
                 silent
@@ -261,15 +290,20 @@ tick page =
         Trying goingFor (Down freq) ->
             Trying (goingFor + 1) (Down freq)
 
-        Finding target okFor (Down current) withHints ->
+        Finding challenge okFor (Down current) withHints ->
             if okFor > 7 then
-                Found
+                case challenge of
+                    Challenge _ [] ->
+                        Found
 
-            else if matches target current then
-                Finding target (okFor + 1) (Down current) withHints
+                    Challenge _ (next :: rest) ->
+                        Finding (Challenge next rest) 0 Up withHints
+
+            else if matches (target challenge) current then
+                Finding challenge (okFor + 1) (Down current) withHints
 
             else
-                Finding target 0 (Down current) withHints
+                Finding challenge 0 (Down current) withHints
 
         _ ->
             page
@@ -287,8 +321,8 @@ updateModel model msg =
         Start withHints ->
             model
 
-        NewChallenge withHints target ->
-            { model | page = Finding target 0 Up withHints }
+        NewChallenge withHints challenge ->
+            { model | page = Finding challenge 0 Up withHints }
 
         MouseMoved y ->
             { model | page = setY model y, y = y }
@@ -309,11 +343,16 @@ updateModel model msg =
             { model | page = page }
 
 
+newSingleChallenge : Bool -> Target -> Msg
+newSingleChallenge withHints frequency =
+    NewChallenge withHints (Challenge ( frequency, [ frequency ] ) [])
+
+
 effect : Msg -> Cmd Msg
 effect msg =
     case msg of
         Start withHints ->
-            Random.generate (NewChallenge withHints) (Random.int (minPitch + 10) (maxPitch - 10))
+            Random.generate (newSingleChallenge withHints) (Random.int (minPitch + 10) (maxPitch - 10))
 
         _ ->
             Cmd.none
@@ -388,7 +427,7 @@ view model =
 
         --Finding target _ Up -> div [] [ text (String.fromInt target) ]
         --Finding target okFor (Down pointed) ->
-        Finding target okFor pointState withHints ->
+        Finding challenge okFor pointState withHints ->
             div
                 []
                 [ div [ onClick (Open Settings), attribute "class" "settings" ] [ text "⚙️" ]
@@ -416,7 +455,7 @@ view model =
                                 if okFor > 0 then
                                     text "hold it..."
 
-                                else if current < target then
+                                else if current < target challenge then
                                     text "you're flat, move up"
 
                                 else
