@@ -7,7 +7,7 @@ import Html.Attributes exposing (attribute)
 import Html.Events exposing (on, onClick)
 import Json.Decode as Decode exposing (..)
 import Json.Encode as Encode
-import List exposing (head)
+import List exposing (head, length)
 import Maybe exposing (withDefault)
 import Random
 import Time
@@ -42,21 +42,31 @@ type alias Reference =
     Frequency
 
 
+type alias ChallengeStep =
+    ( Target, List Reference, String )
+
+
 type Challenge
-    = Challenge ( Target, List Reference ) (List ( Target, List Reference ))
+    = Challenge ChallengeStep (List ChallengeStep)
 
 
 target : Challenge -> Frequency
 target challenge =
     case challenge of
-        Challenge ( t, _ ) _ ->
+        Challenge ( t, _, _ ) _ ->
             t
+
+
+instruction challenge =
+    case challenge of
+        Challenge ( _, _, text ) _ ->
+            text
 
 
 reference : Challenge -> Frequency
 reference challenge =
     case challenge of
-        Challenge ( _, [ r ] ) _ ->
+        Challenge ( _, [ r ], _ ) _ ->
             r
 
         _ ->
@@ -85,7 +95,7 @@ type alias Model =
 type Msg
     = Calibrate
     | Try
-    | Start WithHints
+    | Start (Target -> Msg)
     | NewChallenge WithHints Challenge
     | MouseMoved Int
     | MouseUp
@@ -345,14 +355,19 @@ updateModel model msg =
 
 newSingleChallenge : Bool -> Target -> Msg
 newSingleChallenge withHints frequency =
-    NewChallenge withHints (Challenge ( frequency, [ frequency ] ) [])
+    NewChallenge withHints (Challenge ( frequency, [ frequency ], "Try to match the 2 pitches" ) [])
+
+
+newChordChallenge : Target -> Msg
+newChordChallenge frequency =
+    NewChallenge False (Challenge ( frequency, [ frequency ], "First match the base frequency" ) [ ( frequency * 3 // 2, [ frequency ], "Now find the perfect fifth" ), ( frequency * 81 // 64, [ frequency, frequency * 3 // 2 ], "And now the major third" ) ])
 
 
 effect : Msg -> Cmd Msg
 effect msg =
     case msg of
-        Start withHints ->
-            Random.generate (newSingleChallenge withHints) (Random.int (minPitch + 10) (maxPitch - 10))
+        Start challengeGenerator ->
+            Random.generate challengeGenerator (Random.int (minPitch + 10) (maxPitch - 10))
 
         _ ->
             Cmd.none
@@ -362,6 +377,13 @@ transition from to =
     case ( from, to ) of
         ( _, Found ) ->
             if from /= Found then
+                success ()
+
+            else
+                Cmd.none
+
+        ( Finding (Challenge _ rest_before) _ _ _, Finding (Challenge _ rest_after) _ _ _ ) ->
+            if length rest_before /= length rest_after then
                 success ()
 
             else
@@ -407,7 +429,7 @@ view model =
                 [ div [ attribute "class" "text" ] [ text "You can 'play' by touching the screen. Try it!" ]
                 , div
                     [ if goingFor > 3 then
-                        onClick (Start True)
+                        onClick (Start (newSingleChallenge True))
 
                       else
                         attribute "class" "disabled"
@@ -440,7 +462,7 @@ view model =
                 --, text (String.fromInt (abs (target - pointed)))
                 --, text " ok for: "
                 --, text (String.fromInt okFor)
-                , div [ attribute "class" "text" ] [ text "Try to match the 2 pitches" ]
+                , div [ attribute "class" "text" ] [ text (instruction challenge) ]
 
                 --, if matches target pointed
                 --  then div [] [ text "Match!" ]
@@ -479,7 +501,7 @@ view model =
             div []
                 [ div [ onClick (Open Settings), attribute "class" "settings" ] [ text "⚙️" ]
                 , div [ attribute "class" "text" ] [ text "Nice! You got it!" ]
-                , div [ onClick (Start False), attribute "class" "button" ] [ text "Play another" ]
+                , div [ onClick (Start (newSingleChallenge False)), attribute "class" "button" ] [ text "Play another" ]
                 ]
 
         ErrorPage e ->
@@ -498,7 +520,8 @@ view model =
                         , li [] [ a [ attribute "href" "https://freesound.org/people/MattLeschuck/sounds/511484/" ] [ text "Matt Leschuck" ] ]
                         ]
                     ]
-                , div [ onClick (Start False), attribute "class" "button" ] [ text "Play 'Match Pitch'" ]
+                , div [ onClick (Start (newSingleChallenge False)), attribute "class" "button" ] [ text "Play 'Match Pitch'" ]
+                , div [ onClick (Start newChordChallenge), attribute "class" "button" ] [ text "Play 'Find Chord'" ]
                 ]
 
 
