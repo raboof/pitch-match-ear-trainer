@@ -239,26 +239,17 @@ init flags =
     , Cmd.none
     )
 
-
-encodeSounds tGain tFreq pGain pFreq =
-    Encode.object
-        [ ( "target"
-          , Encode.object
-                [ ( "gain", Encode.float tGain )
-                , ( "frequency", Encode.int tFreq )
+encodeSound (gain, freq) = Encode.object
+                [ ( "gain", Encode.float gain )
+                , ( "frequency", Encode.int freq )
                 ]
-          )
-        , ( "pointed"
-          , Encode.object
-                [ ( "gain", Encode.float pGain )
-                , ( "frequency", Encode.int pFreq )
-                ]
-          )
-        ]
 
+
+encodeSounds soundPairs =
+    Encode.list encodeSound soundPairs
 
 silent =
-    encodeSounds 0 0 0 0
+    encodeSounds [ (0, 0), (0, 0) ]
 
 
 sounds model =
@@ -271,19 +262,19 @@ sounds model =
                 silent
 
             Calibrating ->
-                encodeSounds 0.4 800 0 0
+                encodeSounds [ (0.4, 800), (0, 0) ]
 
             Trying _ (Down pointedFreq) ->
-                encodeSounds 0 0 0.4 pointedFreq
+                encodeSounds [ (0, 0), (0.4, pointedFreq) ]
 
             Trying _ Up ->
                 silent
 
             Finding challenge _ Up _ ->
-                encodeSounds 0.4 (reference challenge) 0 0
+                encodeSounds [ (0.4, (reference challenge)), (0, 0) ]
 
             Finding challenge _ (Down pointedFreq) _ ->
-                encodeSounds 0.4 (reference challenge) 0.4 pointedFreq
+                encodeSounds [ (0.4, (reference challenge)), (0.4, pointedFreq) ]
 
             Found ->
                 silent
